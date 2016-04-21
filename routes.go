@@ -5,28 +5,20 @@ import "net/http";
 import (
     "fmt"
     "html"
+    "github.com/herman-rogers/kingkai"
 );
 
-type Route struct {
-    Name string
-    Method string
-    Pattern string
-    HandlerFunc http.HandlerFunc
-}
-
-type Routes []Route;
-
-var routes = Routes {
-    Route {
+var routes = kingkai.Routes {
+    kingkai.Route {
         "Example",
         "GET",
         "/",
         Index,
     },
-    Route {
+    kingkai.Route {
         "RouterExample",
         "GET",
-        "/example",
+        "/clone",
         ExampleRoute,
     },
 }

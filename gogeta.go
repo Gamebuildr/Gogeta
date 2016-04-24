@@ -30,7 +30,7 @@ func RegisterEureka() {
     instance := eureka.NewInstanceInfo(
         "gogeta.herokuapp.com",
         "gogeta",
-        "172.17.181.94",
+        "gogeta.herokuapp.com",
         80, 30, false);
     instance.Metadata = &eureka.MetaData {
         Map: make(map[string]string),

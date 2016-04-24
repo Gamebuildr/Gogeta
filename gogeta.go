@@ -1,13 +1,25 @@
 package main;
 
 import (
+    "fmt"
+    "os"
     "github.com/herman-rogers/kingkai"
     //"github.com/hudl/fargo"
 );
 
 func main() {
+    var port string = GetPort();
     RegisterEureka();
-    kingkai.StartKingKai(routes, "");
+    kingkai.StartKingKai(routes, port);
+}
+
+func GetPort() string {
+    var port = os.Getenv("PORT");
+    if (port == "") {
+        port = "9000";
+        fmt.Println("INFO: No PORT environment variable found, setting default.");
+    }
+    return ":" + port;
 }
 
 func RegisterEureka() {

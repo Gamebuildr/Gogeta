@@ -2,22 +2,14 @@
 	"ImportPath": "github.com/herman-rogers/gogeta",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v62",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/cenkalti/backoff",
-			"Comment": "v1.0.0",
-			"Rev": "32cd0c5b3aef12c76ed64aaf678f6c79736be7dc"
+			"ImportPath": "github.com/ArthurHlt/gominlog",
+			"Rev": "068c01ce147ad68fca25ef3fa29ae5395ae273ab"
 		},
 		{
-			"ImportPath": "github.com/clbanning/x2j",
-			"Rev": "7ff162bb3af8350327e98980ed129fd14f091b75"
-		},
-		{
-			"ImportPath": "github.com/franela/goreq",
-			"Rev": "3ddeded65be21dacb5a2e2d0b95af9ff6862a2b5"
+			"ImportPath": "github.com/daviddengcn/go-colortext",
+			"Rev": "75909059cead2a9e65ca3f1e23a29a3ea60358e7"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
@@ -29,38 +21,12 @@
 			"Rev": "0eeaf8392f5b04950925b8a69fe70f110fa7cbfc"
 		},
 		{
+			"ImportPath": "github.com/herman-rogers/go-eureka-client",
+			"Rev": "d3692d96583f0694693defab705862e4c1d58f2e"
+		},
+		{
 			"ImportPath": "github.com/herman-rogers/kingkai",
 			"Rev": "c4efd0bdda074e4d4f302181ab00b81e88b15a73"
-		},
-		{
-			"ImportPath": "github.com/hudl/fargo",
-			"Comment": "1.1-2-gdb7766e",
-			"Rev": "db7766ead81523ce5a68dac74a0e34b5198bfb9c"
-		},
-		{
-			"ImportPath": "github.com/miekg/dns",
-			"Rev": "c9d1302d540edfb97d9ecbfe90b4fb515088630b"
-		},
-		{
-			"ImportPath": "github.com/op/go-logging",
-			"Comment": "v1-7-g970db52",
-			"Rev": "970db520ece77730c7e4724c61121037378659d9"
-		},
-		{
-			"ImportPath": "gopkg.in/gcfg.v1",
-			"Rev": "083575c3955c85df16fe9590cceab64d03f5eb6e"
-		},
-		{
-			"ImportPath": "gopkg.in/gcfg.v1/scanner",
-			"Rev": "083575c3955c85df16fe9590cceab64d03f5eb6e"
-		},
-		{
-			"ImportPath": "gopkg.in/gcfg.v1/token",
-			"Rev": "083575c3955c85df16fe9590cceab64d03f5eb6e"
-		},
-		{
-			"ImportPath": "gopkg.in/gcfg.v1/types",
-			"Rev": "083575c3955c85df16fe9590cceab64d03f5eb6e"
 		}
 	]
 }

@@ -7,7 +7,7 @@ import (
 
 func main() {
     RegisterEureka();
-    kingkai.StartKingKai(routes, ":9000");
+    kingkai.StartKingKai(routes, "");
 }
 
 func RegisterEureka() {

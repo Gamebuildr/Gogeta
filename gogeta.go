@@ -5,7 +5,7 @@ import (
     "os"
     // "time"
     "github.com/herman-rogers/kingkai"
-    "github.com/ArthurHlt/go-eureka-client/eureka"
+    "github.com/herman-rogers/go-eureka-client"
 );
 
 func main() {

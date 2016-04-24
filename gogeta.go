@@ -27,7 +27,11 @@ func RegisterEureka() {
     client := eureka.NewClient([]string {
         "http://eureka-gamebuildr.herokuapp.com",
     });
-    instance := eureka.NewInstanceInfo("gogeta.herokuapp.com", "gogeta", "gogeta.herokuapp.com", 80, 30, false);
+    instance := eureka.NewInstanceInfo(
+        "gogeta.herokuapp.com",
+        "gogeta",
+        "172.17.181.94",
+        80, 30, false);
     instance.Metadata = &eureka.MetaData {
         Map: make(map[string]string),
     }

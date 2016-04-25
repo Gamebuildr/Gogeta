@@ -1,29 +1,37 @@
 package main;
 
 import (
-    //"github.com/herman-rogers/KingKai"
-    "github.com/herman-rogers/Mr.Robot"
+    // "github.com/herman-rogers/KingKai"
+    "encoding/json"
+    "log"
+    "net/http"
+    "golang.org/x/net/context"
+    httptransport "github.com/go-kit/kit/transport/http"
 );
-
+//https://github.com/go-kit/kit.git
 func main() {
-    RegisterMrRobot();
-    //kingkai.StartKingKai(routes);
+    // kingkai.StartKingKai(routes);
+    ctx := context.Background();
+    svc := stringService{};
+
+    countHandler := httptransport.NewServer(
+        ctx,
+        makeCountEndpoint(svc),
+        decodeCountRequest,
+        encodeResponse,
+    );
+    http.Handle("/count", countHandler);
+    log.Fatal(http.ListenAndServe(":9000", nil));
 }
 
-func RegisterMrRobot() {
-    mrrobot.SetLoggerAppName("gogeta");
-    client := mrrobot.NewClient([]string {
-        //"http://eureka-gamebuildr.herokuapp.com",
-        "http://localhost:8080/eureka",
-    });
-    //instance := eureka.NewInstanceInfo("gogeta.herokuapp.com", "gogeta", "gogeta.herokuapp.com", 80, 30, false);
-    instance := mrrobot.NewInstanceInfo("test.com", "test", "69.172.200.235", 80, 30, false);
-    instance.Metadata = &mrrobot.MetaData {
-        Map: make(map[string]string),
+func decodeCountRequest(r *http.Request) (interface{}, error) {
+    var request countRequest;
+    if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+        return nil, err;
     }
-    instance.Metadata.Map["foo"] = "bar";
-    client.RegisterInstance("gogeta", instance);
-    client.GetApplication(instance.App);
-    client.GetInstance(instance.App, instance.HostName);
-    client.SendHeartbeatUpdates(instance.App, instance.HostName);
+    return request, nil;
+}
+
+func encodeResponse(w http.ResponseWriter, response interface{}) error {
+    return json.NewEncoder(w).Encode(response);
 }

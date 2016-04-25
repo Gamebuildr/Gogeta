@@ -5,7 +5,7 @@ import "net/http";
 import (
     "fmt"
     "html"
-    "github.com/herman-rogers/kingkai"
+    "github.com/herman-rogers/KingKai"
 );
 
 var routes = kingkai.Routes {

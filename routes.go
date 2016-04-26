@@ -1,32 +1,22 @@
 package main;
 
-import "net/http";
-
 import (
-    "fmt"
-    "html"
-    "github.com/herman-rogers/KingKai"
+    "net/http"
+    "encoding/json"
 );
 
-var routes = kingkai.Routes {
-    kingkai.Route {
-        "Example",
-        "GET",
-        "/",
-        Index,
-    },
-    kingkai.Route {
-        "RouterExample",
-        "GET",
-        "/clone",
-        ExampleRoute,
-    },
+func routes() {
+    http.Handle("/count", countServerRequest());
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path));
+func decodeCountRequest(r *http.Request) (interface{}, error) {
+    var request countRequest;
+    if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+        return nil, err;
+    }
+    return request, nil;
 }
 
-func ExampleRoute(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "Example Route, %q", html.EscapeString(r.URL.Path));
+func encodeResponse(w http.ResponseWriter, response interface{}) error {
+    return json.NewEncoder(w).Encode(response);
 }

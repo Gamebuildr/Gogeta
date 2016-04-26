@@ -2,31 +2,43 @@
 	"ImportPath": "github.com/herman-rogers/gogeta",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v62",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/ArthurHlt/gominlog",
-			"Rev": "068c01ce147ad68fca25ef3fa29ae5395ae273ab"
+			"ImportPath": "github.com/go-kit/kit/endpoint",
+			"Rev": "60b4d800f541554ebca34ea77265e574b2ca79a9"
 		},
 		{
-			"ImportPath": "github.com/daviddengcn/go-colortext",
-			"Rev": "75909059cead2a9e65ca3f1e23a29a3ea60358e7"
+			"ImportPath": "github.com/go-kit/kit/log",
+			"Rev": "60b4d800f541554ebca34ea77265e574b2ca79a9"
 		},
 		{
-			"ImportPath": "github.com/gorilla/context",
-			"Rev": "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
+			"ImportPath": "github.com/go-kit/kit/transport/http",
+			"Rev": "60b4d800f541554ebca34ea77265e574b2ca79a9"
 		},
 		{
-			"ImportPath": "github.com/gorilla/mux",
-			"Comment": "v1.1",
-			"Rev": "0eeaf8392f5b04950925b8a69fe70f110fa7cbfc"
+			"ImportPath": "github.com/go-logfmt/logfmt",
+			"Comment": "v0.1.0",
+			"Rev": "08ab82a63ef462ac643ec79e659f023891f588f5"
 		},
 		{
-			"ImportPath": "github.com/herman-rogers/go-eureka-client",
-			"Rev": "d3692d96583f0694693defab705862e4c1d58f2e"
+			"ImportPath": "github.com/go-stack/stack",
+			"Comment": "v1.5.0",
+			"Rev": "ac4c579c437a23e1a15814c867ccb82122fb383b"
 		},
 		{
-			"ImportPath": "github.com/herman-rogers/kingkai",
-			"Rev": "c4efd0bdda074e4d4f302181ab00b81e88b15a73"
+			"ImportPath": "github.com/kr/logfmt",
+			"Rev": "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "b797637b7aeeed133049c7281bfa31dcc9ca42d6"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "b797637b7aeeed133049c7281bfa31dcc9ca42d6"
 		}
 	]
 }

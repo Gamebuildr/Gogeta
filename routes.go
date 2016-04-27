@@ -3,14 +3,28 @@ package main;
 import (
     "net/http"
     "encoding/json"
+    "golang.org/x/net/context"
+    httptransport "github.com/go-kit/kit/transport/http"
 );
 
 func routes() {
-    http.Handle("/count", countServerRequest());
+    context := context.Background();
+    service := gogetaService{};
+
+    http.Handle("/0/gitclone", gitCloneServerRequest(context, service));
 }
 
-func decodeCountRequest(r *http.Request) (interface{}, error) {
-    var request countRequest;
+func gitCloneServerRequest(context context.Context, service gogetaService) http.Handler {
+    return httptransport.NewServer(
+        context,
+        makeGitCloneEndpoint(service),
+        decodeGitCloneRequest,
+        encodeResponse,
+    );
+}
+
+func decodeGitCloneRequest(r *http.Request) (interface{}, error) {
+    var request gitCloneRequest;
     if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
         return nil, err;
     }

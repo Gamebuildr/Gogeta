@@ -18,13 +18,13 @@ func gitCloneServerRequest(context context.Context, service gogetaService) http.
     return httptransport.NewServer(
         context,
         makeGitCloneEndpoint(service),
-        decodeGitCloneRequest,
+        decodeGitRequest,
         encodeResponse,
     );
 }
 
-func decodeGitCloneRequest(r *http.Request) (interface{}, error) {
-    var request gitCloneRequest;
+func decodeGitRequest(r *http.Request) (interface{}, error) {
+    var request gitServiceRequest;
     if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
         return nil, err;
     }

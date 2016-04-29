@@ -16,7 +16,7 @@ func GetPort() string {
     var port = os.Getenv("PORT");
     if (port == "") {
         port = "9000";
-        log.Printf("INFO: No PORT environment variable found, setting default.");
+        log.Printf("INFO: No port environment variable found, setting default.");
     }
     return ":" + port;
 }

@@ -2,10 +2,12 @@ package main;
 
 import (
     "log"
+    // "sync"
     "golang.org/x/net/context"
     "github.com/go-kit/kit/endpoint"
     "github.com/satori/go.uuid"
-    git "github.com/libgit2/git2go"
+    // git "github.com/libgit2/git2go"
+    "os/exec"
 );
 
 func makeGitCloneEndpoint(service GogetaServiceInterface) endpoint.Endpoint {
@@ -17,16 +19,20 @@ func makeGitCloneEndpoint(service GogetaServiceInterface) endpoint.Endpoint {
 }
 
 func (gogetaService) GitClone(gitReq gitServiceRequest) string {
-    go StartGitClone(gitReq.Repo)
+    go GitShallowClone(gitReq.Repo)
     return "Clone Success"
 }
 
-func StartGitClone(gitRepo string) {
-    var cloneOptions *git.CloneOptions = &git.CloneOptions{}
-    folder := uuid.NewV4()
-    repo, err := git.Clone(gitRepo, folder.String(), cloneOptions)
+func GitShallowClone(repo string) {
+    var folder uuid.UUID = uuid.NewV4()
+    var location string = "./" + folder.String()
+
+    log.Print("Git Clone Request");
+    cmd := exec.Command("git", "clone", "--depth", "1", repo, location)
+    err := cmd.Run()
     if(err != nil) {
-        log.Print("ERROR: " + err.Error());
+        log.Print("Git Clone Error: " + err.Error())
+    } else {
+        log.Print("Git Clone Success")
     }
-    log.Print(repo)
 }

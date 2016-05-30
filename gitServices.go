@@ -2,12 +2,14 @@ package main;
 
 import (
     "log"
-    // "sync"
+    // "time"
+    //"github.com/kardianos/osext"
     "golang.org/x/net/context"
     "github.com/go-kit/kit/endpoint"
     "github.com/satori/go.uuid"
     // git "github.com/libgit2/git2go"
     "os/exec"
+    "os"
 );
 
 func makeGitCloneEndpoint(service GogetaServiceInterface) endpoint.Endpoint {
@@ -26,13 +28,39 @@ func (gogetaService) GitClone(gitReq gitServiceRequest) string {
 func GitShallowClone(repo string) {
     var folder uuid.UUID = uuid.NewV4()
     var location string = "./" + folder.String()
-
-    log.Print("Git Clone Request");
     cmd := exec.Command("git", "clone", "--depth", "1", repo, location)
-    err := cmd.Run()
+    logfile, err := os.Create("gogeta.log")
     if(err != nil) {
-        log.Print("Git Clone Error: " + err.Error())
-    } else {
-        log.Print("Git Clone Success")
+        log.Print("Clone Error: " + err.Error())
     }
+    defer logfile.Close()
+
+    cmd.Stdout = logfile
+    cmd.Stderr = logfile
+
+    if err := cmd.Start(); err != nil {
+        log.Print("Clone Error: " + err.Error())
+    }
+
+    // ticker := time.NewTicker(time.Second)
+    // go func(ticker *time.Ticker) {
+    //         //now := time.Now()
+    //     for _ = range ticker.C {
+    //         //log.Print(out)
+    //         log.Print("Ticker Running")
+    //         // go io.Copy(writer, stdout)
+    //     }
+    // }(ticker)
+    log.Print("Starting Clone")
+    cmd.Wait()
+    log.Print("Finished Clone")
+    //folderPath, err := osext.ExecutableFolder()
 }
+
+// func GitUpdateRepo(repo string) {
+//
+// }
+
+// func GitDeleteRepo(repo string) {
+//
+// }

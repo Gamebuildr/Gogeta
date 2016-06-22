@@ -4,10 +4,10 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
-func ConnectToMongoDB() {
-	session, err := mgo.Dial("mongodb")
+func ConnectToMongoDB() *mgo.Session {
+	session, err := mgo.Dial("mongodb://localhost:27017/gogeta")
 	if err != nil {
-		panic(err)
+		LoggerError("MongoDB Error: " + err.Error())
 	}
-	defer session.Close()
+	return session
 }

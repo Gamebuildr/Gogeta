@@ -1,16 +1,18 @@
-package main;
+package main
+
+type gogetaService struct{}
 
 type GogetaServiceInterface interface {
-    GitClone(gitServiceRequest) string;
+	GitClone(gitServiceRequest) string
+	GitFindRepo(gitServiceRequest) string
 }
 
-type gogetaService struct{};
-
 type gitServiceRequest struct {
-    Usr string `json:"usr"`
-    Repo string `json:"repo"`
+	Usr     string `json:"usr"`
+	Repo    string `json:"repo"`
+	Project string `json:"project"`
 }
 
 type serviceResponse struct {
-    res string `json:"r"`
+	res string `json:"r"`
 }

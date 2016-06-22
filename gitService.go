@@ -1,34 +1,77 @@
-package main;
+package main
 
 import (
-    "github.com/satori/go.uuid"
-    "os/exec"
-);
+	"os/exec"
 
-func (gogetaService) GitClone(gitReq gitServiceRequest) string {
-    go GitShallowClone(gitReq.Repo)
-    return "Clone Success"
+	"gopkg.in/mgo.v2/bson"
+
+	"github.com/satori/go.uuid"
+)
+
+type GogetaRepo struct {
+	Usr    string
+	Repo   string
+	Folder string
 }
 
-func GitShallowClone(repo string) {
-    var folder uuid.UUID = uuid.NewV4()
-    var location string = "./" + folder.String()
-    cmd := exec.Command("git", "clone", "--depth", "1", repo, location)
+func (gogetaService) GitFindRepo(gitReq gitServiceRequest) string {
+	go FindGitRepo(gitReq.Usr, gitReq.Repo)
+	return "repo"
+}
 
-    logfile := GetLogFile()
-    defer logfile.Close()
+func (gogetaService) GitClone(gitReq gitServiceRequest) string {
+	var folder string = "./" + gitReq.Usr + "/" + gitReq.Project
+	go GitShallowClone(gitReq.Usr, gitReq.Repo, folder)
+	return "clone"
+}
 
-    cmd.Stdout = logfile
-    cmd.Stderr = logfile
+func GitShallowClone(usr string, repo string, folder string) {
+	var uuid uuid.UUID = uuid.NewV4()
+	var location string = folder + "/" + uuid.String()
+	cmd := exec.Command("git", "clone", "--depth", "1", repo, location)
 
-    if err := cmd.Start(); err != nil {
-        LoggerError("Clone Error: " + err.Error())
-    }
-    LoggerInfo("Starting Clone")
-    err := cmd.Wait()
-    if (err != nil) {
-        LoggerError("Clone Failed: " + err.Error())
-    } else {
-        LoggerInfo("Clone Successful")
-    }
+	logfile := GetLogFile()
+	defer logfile.Close()
+
+	cmd.Stdout = logfile
+	cmd.Stderr = logfile
+
+	commandErr := cmd.Start()
+	LogGitData(commandErr, "Git Command")
+
+	LoggerInfo("Starting Clone")
+	cloneErr := cmd.Wait()
+	LogGitData(cloneErr, "Git Clone")
+	if cloneErr == nil {
+		gitRepo := &GogetaRepo{usr, repo, location}
+		go GitSaveRepo(gitRepo)
+	}
+}
+
+func FindGitRepo(usr string, repo string) {
+	result := GogetaRepo{}
+	session := ConnectToMongoDB()
+	defer session.Close()
+	c := session.DB("gogeta").C("repos")
+	err := c.Find(bson.M{"usr": usr, "repo": repo}).One(&result)
+	LogGitData(err, "Find Repo")
+	if err == nil {
+		LoggerInfo(result.Folder)
+	}
+}
+
+func GitSaveRepo(repo *GogetaRepo) {
+	session := ConnectToMongoDB()
+	defer session.Close()
+	c := session.DB("gogeta").C("repos")
+	err := c.Insert(repo)
+	LogGitData(err, "Save Repo")
+}
+
+func LogGitData(err error, info string) {
+	if err != nil {
+		LoggerError(info + " Error: " + err.Error())
+	} else {
+		LoggerInfo(info + " Successful")
+	}
 }

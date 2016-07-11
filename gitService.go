@@ -1,11 +1,11 @@
 package main
 
 import (
+	"errors"
 	"os/exec"
-
 	"gopkg.in/mgo.v2/bson"
-
 	"github.com/satori/go.uuid"
+	"github.com/herman-rogers/gogeta/logger"
 )
 
 type GogetaRepo struct {
@@ -14,15 +14,13 @@ type GogetaRepo struct {
 	Folder string
 }
 
-func (gogetaService) GitFindRepo(gitReq gitServiceRequest) string {
-	go FindGitRepo(gitReq.Usr, gitReq.Repo)
-	return "repo"
-}
-
-func (gogetaService) GitClone(gitReq gitServiceRequest) string {
+func GitProcessMessage(gitReq gitServiceRequest) error {
+	if(gitReq.Usr == "" || gitReq.Project == "" || gitReq.Repo == "") {
+		return errors.New("Missing Git Service Properties");
+	}
 	var folder string = "./" + gitReq.Usr + "/" + gitReq.Project
 	go GitShallowClone(gitReq.Usr, gitReq.Repo, folder)
-	return "clone"
+	return nil
 }
 
 func GitShallowClone(usr string, repo string, folder string) {
@@ -30,7 +28,7 @@ func GitShallowClone(usr string, repo string, folder string) {
 	var location string = folder + "/" + uuid.String()
 	cmd := exec.Command("git", "clone", "--depth", "1", repo, location)
 
-	logfile := GetLogFile()
+	logfile := logger.GetLogFile()
 	defer logfile.Close()
 
 	cmd.Stdout = logfile
@@ -39,7 +37,7 @@ func GitShallowClone(usr string, repo string, folder string) {
 	commandErr := cmd.Start()
 	LogGitData(commandErr, "Git Command")
 
-	LoggerInfo("Starting Clone")
+	logger.Info("Starting Clone")
 	cloneErr := cmd.Wait()
 	LogGitData(cloneErr, "Git Clone")
 	if cloneErr == nil {
@@ -56,7 +54,7 @@ func FindGitRepo(usr string, repo string) {
 	err := c.Find(bson.M{"usr": usr, "repo": repo}).One(&result)
 	LogGitData(err, "Find Repo")
 	if err == nil {
-		LoggerInfo(result.Folder)
+		logger.Info(result.Folder)
 	}
 }
 
@@ -70,8 +68,8 @@ func GitSaveRepo(repo *GogetaRepo) {
 
 func LogGitData(err error, info string) {
 	if err != nil {
-		LoggerError(info + " Error: " + err.Error())
+		logger.Error(info + " Error: " + err.Error())
 	} else {
-		LoggerInfo(info + " Successful")
+		logger.Info(info + " Successful")
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package logger
 
 import (
 	"log"
@@ -17,14 +17,21 @@ func GetLogFile() *os.File {
 	return logfile
 }
 
-func LoggerInfo(data string) {
+func Info(data string) {
 	logfile := GetLogFile()
 	defer logfile.Close()
 	log.SetOutput(logfile)
 	log.Print(data)
 }
 
-func LoggerError(data string) {
+func Warning(data string) {
+	logfile := GetLogFile()
+	defer logfile.Close()
+	log.SetOutput(logfile)
+	log.Print("Warning " + data)
+}
+
+func Error(data string) {
 	logfile := GetLogFile()
 	defer logfile.Close()
 	log.SetOutput(logfile)

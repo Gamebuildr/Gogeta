@@ -18,7 +18,6 @@ type Process interface {
 }
 
 func Start(process Process) {
-    logger.Info("Poller: Processing")
     session := sqs.New(session.New(), &aws.Config{ Region: aws.String("eu-west-1") })
     params := &sqs.ReceiveMessageInput {
         QueueUrl: aws.String("https://sqs.eu-west-1.amazonaws.com/452978454880/gogeta-queue"),
@@ -37,7 +36,6 @@ func Start(process Process) {
         InboundMessages(session, messages, process)
         return;
     }
-    logger.Info("No Messages Found")
 }
 
 func InboundMessages(session *sqs.SQS, messages []*sqs.Message, process Process) {

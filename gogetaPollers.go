@@ -5,6 +5,7 @@ import (
 	"github.com/jasonlvhit/gocron"
 	"github.com/herman-rogers/gogeta/poller"
 	"github.com/aws/aws-sdk-go/service/sqs"
+    "github.com/herman-rogers/gogeta/logger"
 )
 
 type SQSMessage struct {
@@ -30,6 +31,7 @@ func GitCronJob() {
 }
 
 func StartMessagePollers() {
+    logger.Info("Starting Message Poller")
     gocron.Every(1).Minute().Do(GitCronJob)
     gocron.Start()
 }

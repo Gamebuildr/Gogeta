@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/satori/go.uuid"
 	"github.com/herman-rogers/gogeta/logger"
+    "github.com/herman-rogers/gogeta/uploader"
 )
 
 type GogetaRepo struct {
@@ -41,8 +42,9 @@ func GitShallowClone(usr string, repo string, folder string) {
 	cloneErr := cmd.Wait()
 	LogGitData(cloneErr, "Git Clone")
 	if cloneErr == nil {
-		gitRepo := &GogetaRepo{usr, repo, location}
-		go GitSaveRepo(gitRepo)
+		gitData := &GogetaRepo{usr, repo, location}
+		go SaveRepo(gitData)
+		go uploader.S3UploadFolder(gitData.Folder, "gogeta-repos")
 	}
 }
 
@@ -58,7 +60,7 @@ func FindGitRepo(usr string, repo string) {
 	}
 }
 
-func GitSaveRepo(repo *GogetaRepo) {
+func SaveRepo(repo *GogetaRepo) {
 	session := ConnectToMongoDB()
 	defer session.Close()
 	c := session.DB("gogeta").C("repos")

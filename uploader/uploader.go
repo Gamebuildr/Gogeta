@@ -51,7 +51,7 @@ func UploadFilesToS3(dir string, fileName string) {
 	}
 	session := session.New(&aws.Config{Region: aws.String("eu-west-1")})
 	uploader := s3manager.NewUploader(session)
-	resp, err := uploader.Upload(&s3manager.UploadInput{
+	_, err := uploader.Upload(&s3manager.UploadInput{
 		Body:   file,
 		Bucket: aws.String(s3bucket),
 		Key:    aws.String(path),

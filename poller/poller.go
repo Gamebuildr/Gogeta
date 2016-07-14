@@ -5,6 +5,7 @@ import (
     "github.com/aws/aws-sdk-go/aws/session"
     "github.com/aws/aws-sdk-go/service/sqs"
     "github.com/herman-rogers/gogeta/logger"
+    "github.com/herman-rogers/gogeta/config"
 )
 
 type ProcessFunc func(msg *sqs.Message) error
@@ -18,9 +19,9 @@ type Process interface {
 }
 
 func Start(process Process) {
-    session := sqs.New(session.New(), &aws.Config{ Region: aws.String("eu-west-1") })
+    session := sqs.New(session.New(), &aws.Config{ Region: aws.String(config.File.AWSRegion) })
     params := &sqs.ReceiveMessageInput {
-        QueueUrl: aws.String("https://sqs.eu-west-1.amazonaws.com/452978454880/gogeta-queue"),
+        QueueUrl: aws.String(config.File.GogetaSQS),
         MaxNumberOfMessages: aws.Int64(1),
         VisibilityTimeout: aws.Int64(1),
         WaitTimeSeconds: aws.Int64(1),
@@ -41,13 +42,11 @@ func Start(process Process) {
 func InboundMessages(session *sqs.SQS, messages []*sqs.Message, process Process) {
     for i := range messages {
         go func(message *sqs.Message) {
-            logger.Info("Poller: Spawned Worker Goroutine")
             if err := ProcessInbound(session, message, process); err != nil {
                 logger.Warning(err.Error())
             }
         }(messages[i])
     }
-    logger.Info("Poller: Process Complete")
 }
 
 func ProcessInbound( session *sqs.SQS, m *sqs.Message, process Process) error {
@@ -63,7 +62,7 @@ func ProcessInbound( session *sqs.SQS, m *sqs.Message, process Process) error {
 
 func RemoveMessageFromPoller(s *sqs.SQS, m *sqs.Message) {
     deleteMsg := &sqs.DeleteMessageInput{
-        QueueUrl: aws.String("https://sqs.eu-west-1.amazonaws.com/452978454880/gogeta-queue"),
+        QueueUrl: aws.String(config.File.GogetaSQS),
         ReceiptHandle: m.ReceiptHandle,
     }
     s.DeleteMessage(deleteMsg)

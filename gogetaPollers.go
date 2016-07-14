@@ -13,6 +13,17 @@ type SQSMessage struct {
 	Message     string
 }
 
+func StartAppPoller() {
+    logger.Info("Starting Message Poller")
+    gocron.Every(1).Minute().Do(GitCronJob)
+    gocron.Every(1).Minute().Do(UpdateGitRepositories)
+    gocron.Start()
+}
+
+func GitCronJob() {
+	poller.Start(poller.ProcessFunc(ProcessGitMessages))
+}
+
 func ProcessGitMessages(msg *sqs.Message) error {
 	var sqsMessage SQSMessage
 	var gitData gitServiceRequest
@@ -23,15 +34,5 @@ func ProcessGitMessages(msg *sqs.Message) error {
 	messageData := []byte(sqsMessage.Message)
 	json.Unmarshal(messageData, &gitData)
 
-	return GitProcessMessage(gitData)
-}
-
-func GitCronJob() {
-	poller.Start(poller.ProcessFunc(ProcessGitMessages))
-}
-
-func StartMessagePollers() {
-    logger.Info("Starting Message Poller")
-    gocron.Every(1).Minute().Do(GitCronJob)
-    gocron.Start()
+	return GitProcessSQSMessages(gitData)
 }

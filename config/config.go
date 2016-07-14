@@ -8,7 +8,7 @@ import (
 
 type Config struct {
     RepoPath string `json:"repopath"`
-	GogetaSQS string `json:"gogetasqs"`
+	AmazonSQS string `json:"amazonsqs"`
 	AWSRegion string `json:"awsregion"`
 }
 

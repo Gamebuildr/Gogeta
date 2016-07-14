@@ -21,7 +21,7 @@ type Process interface {
 func Start(process Process) {
     session := sqs.New(session.New(), &aws.Config{ Region: aws.String(config.File.AWSRegion) })
     params := &sqs.ReceiveMessageInput {
-        QueueUrl: aws.String(config.File.GogetaSQS),
+        QueueUrl: aws.String(config.File.AmazonSQS),
         MaxNumberOfMessages: aws.Int64(1),
         VisibilityTimeout: aws.Int64(1),
         WaitTimeSeconds: aws.Int64(1),
@@ -62,7 +62,7 @@ func ProcessInbound( session *sqs.SQS, m *sqs.Message, process Process) error {
 
 func RemoveMessageFromPoller(s *sqs.SQS, m *sqs.Message) {
     deleteMsg := &sqs.DeleteMessageInput{
-        QueueUrl: aws.String(config.File.GogetaSQS),
+        QueueUrl: aws.String(config.File.AmazonSQS),
         ReceiptHandle: m.ReceiptHandle,
     }
     s.DeleteMessage(deleteMsg)

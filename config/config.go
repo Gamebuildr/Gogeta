@@ -7,16 +7,16 @@ import (
 )
 
 type Config struct {
-    RepoPath string `json:"repopath"`
-	AmazonSQS string `json:"amazonsqs"`
-	AWSRegion string `json:"awsregion"`
+	RepoPath    string `json:"repopath"`
+	AmazonSQS   string `json:"amazonsqs"`
+	AWSRegion   string `json:"awsregion"`
 }
 
 var File Config
 
 func Load() {
 	config := GetConfig()
-    File = config
+	File = config
 }
 
 func GetConfig() Config {

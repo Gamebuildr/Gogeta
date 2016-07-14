@@ -24,7 +24,7 @@ func GitProcessSQSMessages(gitReq gitServiceRequest) error {
 func GitShallowClone(data gitServiceRequest) {
 	var uuid uuid.UUID = uuid.NewV4()
 	folder := config.File.RepoPath + data.Usr + "/" + data.Project + "_" + uuid.String()
-	cmd := exec.Command("git", "clone", "--depth", "1", data.Repo, folder)
+	cmd := exec.Command("git", "clone", "--depth", "2", data.Repo, folder)
 
 	logfile := logger.GetLogFile()
 	defer logfile.Close()
@@ -61,18 +61,32 @@ func UpdateGitRepositories() {
 
 func GitPull(data GogetaRepo, repo *git.Repository) {
 	FetchLatestsUpdates(data)
-	analysis := AnalyzeLatestUpdates(repo)
+	remoteBranch := GetRemoteBranch(repo)
+	remoteBranchID := remoteBranch.Target()
+
+	analysis, err := AnalyzeLatestUpdates(repo, remoteBranch)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 	mergeType := CheckMergeAnalysis(analysis)
+
 	var mergeErr error
 	switch mergeType {
 	case UP_TO_DATE:
 		break
 	case NORMAL_MERGE:
-		mergeErr = MergeNormal(repo)
+		mergeErr = MergeNormal(repo, remoteBranch, remoteBranchID)
 	case FAST_FORWARD:
-		mergeErr = MergeFastForward(repo)
+		mergeErr = MergeFastForward(repo, remoteBranchID)
 	}
-	logger.LogError(mergeErr, "Merge Error")
+	msg := "Git Merge " + mergeType + " " + data.Folder
+	logger.LogError(mergeErr, msg)
+}
+
+func GetRemoteBranch(repo *git.Repository) *git.Reference {
+	remoteBranch, err := repo.References.Lookup("refs/remotes/origin/master")
+	logger.LogError(err, "Git Remote Branch")
+	return remoteBranch
 }
 
 func FetchLatestsUpdates(data GogetaRepo) {
@@ -82,21 +96,21 @@ func FetchLatestsUpdates(data GogetaRepo) {
 	commandErr := cmd.Start()
 	logger.LogError(commandErr, "Git Fetch")
 
-	cloneErr := cmd.Wait()
-	logger.LogError(cloneErr, "Git Fetch")
+	fetchErr := cmd.Wait()
+	logger.LogError(fetchErr, "Git Fetch")
 }
 
-func AnalyzeLatestUpdates(repo *git.Repository) git.MergeAnalysis {
-	remoteBranch := GetRemoteBranch(repo)
+func AnalyzeLatestUpdates(repo *git.Repository, remoteBranch *git.Reference) (git.MergeAnalysis, error) {
 	annotatedCommit, err := repo.AnnotatedCommitFromRef(remoteBranch)
 	if err != nil {
-		logger.LogError(err, "Git Merge Analysis")
+		var nullAnalysis git.MergeAnalysis
+		return nullAnalysis, err
 	}
 	mergeHeads := make([]*git.AnnotatedCommit, 1)
 	mergeHeads[0] = annotatedCommit
 	analysis, _, err := repo.MergeAnalysis(mergeHeads)
 	logger.LogError(err, "Git Merge Analysis")
-	return analysis
+	return analysis, nil
 }
 
 func CheckMergeAnalysis(analysis git.MergeAnalysis) string {
@@ -109,13 +123,11 @@ func CheckMergeAnalysis(analysis git.MergeAnalysis) string {
 	return FAST_FORWARD
 }
 
-func MergeNormal(repo *git.Repository) error {
+func MergeNormal(repo *git.Repository, remoteBranch *git.Reference, remoteBranchID *git.Oid) error {
 	head, err := repo.Head()
 	if err != nil {
 		return err
 	}
-	remoteBranch := GetRemoteBranch(repo)
-	remoteBranchID := remoteBranch.Target()
 	annotatedCommit, err := repo.AnnotatedCommitFromRef(remoteBranch)
 	if err != nil {
 		return err
@@ -155,13 +167,11 @@ func MergeNormal(repo *git.Repository) error {
 	return nil
 }
 
-func MergeFastForward(repo *git.Repository) error {
+func MergeFastForward(repo *git.Repository, remoteBranchID *git.Oid) error {
 	head, err := repo.Head()
 	if err != nil {
 		return err
 	}
-	remoteBranch := GetRemoteBranch(repo)
-	remoteBranchID := remoteBranch.Target()
 	remoteTree, err := repo.LookupTree(remoteBranchID)
 	if err != nil {
 		return err
@@ -178,10 +188,4 @@ func MergeFastForward(repo *git.Repository) error {
 		return err
 	}
 	return nil
-}
-
-func GetRemoteBranch(repo *git.Repository) *git.Reference {
-	remoteBranch, err := repo.References.Lookup("refs/remotes/origin/master")
-	logger.LogError(err, "Git Remote Branch")
-	return remoteBranch
 }

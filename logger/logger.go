@@ -6,9 +6,11 @@ import (
 	"time"
 )
 
+const fileName string = "gogeta_"
+
 func GetLogFile() *os.File {
 	var time = time.Now().Local()
-	var filename string = "gogeta_" + time.Format("2006-01-02") + ".log"
+	var filename string = fileName + time.Format("2006-01-02") + ".log"
 	var directory string = "logs/" + filename
 	logfile, err := os.OpenFile(directory, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0640)
 	LogError(err, "Log File Error")
@@ -25,7 +27,7 @@ func LogData(err error, info string) {
 
 func LogError(err error, info string) {
 	if err != nil {
-		Error(info + err.Error())
+		Error(info + " " + err.Error())
 	}
 }
 

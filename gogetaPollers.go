@@ -1,30 +1,30 @@
 package main
 
 import (
-    "encoding/json"
-	"github.com/jasonlvhit/gocron"
-	"github.com/herman-rogers/gogeta/poller"
+	"encoding/json"
 	"github.com/aws/aws-sdk-go/service/sqs"
-    "github.com/herman-rogers/gogeta/logger"
+	"github.com/herman-rogers/gogeta/logger"
+	"github.com/herman-rogers/gogeta/poller"
+	"github.com/jasonlvhit/gocron"
 )
 
 type SQSMessage struct {
-	MessageId   string
-	Message     string
+	MessageId string
+	Message   string
 }
 
 func StartAppPoller() {
-    logger.Info("Starting Message Poller")
-    gocron.Every(1).Minute().Do(GitCronJob)
-    gocron.Every(1).Minute().Do(UpdateGitRepositories)
-    gocron.Start()
+	logger.Info("Starting Message Poller")
+	gocron.Every(1).Minute().Do(ScmCronJob)
+	gocron.Every(1).Minute().Do(UpdateGitRepositories)
+	gocron.Start()
 }
 
-func GitCronJob() {
-	poller.Start(poller.ProcessFunc(ProcessGitMessages))
+func ScmCronJob() {
+	poller.Start(poller.ProcessFunc(ProcessSCMMessages))
 }
 
-func ProcessGitMessages(msg *sqs.Message) error {
+func ProcessSCMMessages(msg *sqs.Message) error {
 	var sqsMessage SQSMessage
 	var gitData gitServiceRequest
 

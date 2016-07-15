@@ -13,7 +13,7 @@ const UP_TO_DATE = "UP_TO_DATE"
 const NORMAL_MERGE = "NORMAL_MERGE"
 const FAST_FORWARD = "FAST_FORWARD"
 
-func GitProcessSQSMessages(gitReq gitServiceRequest) error {
+func GitProcessSQSMessages(gitReq scmServiceRequest) error {
 	if gitReq.Usr == "" || gitReq.Project == "" || gitReq.Repo == "" {
 		return errors.New("Missing Git Service Properties")
 	}
@@ -21,7 +21,7 @@ func GitProcessSQSMessages(gitReq gitServiceRequest) error {
 	return nil
 }
 
-func GitShallowClone(data gitServiceRequest) {
+func GitShallowClone(data scmServiceRequest) {
 	var uuid uuid.UUID = uuid.NewV4()
 	folder := config.File.RepoPath + data.Usr + "/" + data.Project + "_" + uuid.String()
 	cmd := exec.Command("git", "clone", "--depth", "2", data.Repo, folder)
@@ -38,8 +38,16 @@ func GitShallowClone(data gitServiceRequest) {
 	cloneErr := cmd.Wait()
 	logger.LogError(cloneErr, "Git Clone")
 	if cloneErr == nil {
-		gitData := &GogetaRepo{data.Usr, data.Repo, folder}
-		go SaveRepo(gitData)
+		gitData := &GogetaRepo{
+			data.Usr,
+			data.Repo,
+			folder,
+			data.SCMType,
+			data.Engine,
+			data.Platform,
+		}
+		go SaveRepo(*gitData)
+		go TriggerMrRobotBuild(*gitData)
 	}
 }
 
@@ -50,10 +58,10 @@ func UpdateGitRepositories() {
 		repo, err := git.OpenRepository(folder)
 		if err != nil {
 			logger.Error(err.Error())
-			return
+			continue
 		}
 		if repo.IsBare() {
-			return
+			continue
 		}
 		go GitPull(repos[i], repo)
 	}
@@ -69,18 +77,20 @@ func GitPull(data GogetaRepo, repo *git.Repository) {
 		logger.Error(err.Error())
 	}
 	mergeType := CheckMergeAnalysis(analysis)
+	msg := "Git Merge " + mergeType
 
-	var mergeErr error
 	switch mergeType {
 	case UP_TO_DATE:
 		break
 	case NORMAL_MERGE:
-		mergeErr = MergeNormal(repo, remoteBranch, remoteBranchID)
+		err := MergeNormal(repo, remoteBranch, remoteBranchID)
+		BuildAfterMerge(err, msg, data)
+		break
 	case FAST_FORWARD:
-		mergeErr = MergeFastForward(repo, remoteBranchID)
+		err := MergeFastForward(repo, remoteBranchID)
+		BuildAfterMerge(err, msg, data)
+		break
 	}
-	msg := "Git Merge " + mergeType + " " + data.Folder
-	logger.LogError(mergeErr, msg)
 }
 
 func GetRemoteBranch(repo *git.Repository) *git.Reference {

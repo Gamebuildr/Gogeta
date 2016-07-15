@@ -1,14 +1,14 @@
 package uploader
 
 import (
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/herman-rogers/gogeta/logger"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 )
 
 var s3bucket string
@@ -58,7 +58,7 @@ func UploadFilesToS3(dir string, fileName string) {
 	})
 	if err != nil {
 		logger.Warning("S3 Upload " + err.Error() + path)
-		return;
+		return
 	}
 	os.RemoveAll(dir)
 }

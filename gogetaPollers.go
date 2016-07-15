@@ -8,6 +8,15 @@ import (
 	"github.com/jasonlvhit/gocron"
 )
 
+type scmServiceRequest struct {
+	Usr      string `json:"usr"`
+	Repo     string `json:"repo"`
+	Project  string `json:"project"`
+	SCMType  string `json:"scmtype"`
+	Engine   string `json:"engine"`
+	Platform string `json:"platform"`
+}
+
 type SQSMessage struct {
 	MessageId string
 	Message   string
@@ -26,7 +35,7 @@ func ScmCronJob() {
 
 func ProcessSCMMessages(msg *sqs.Message) error {
 	var sqsMessage SQSMessage
-	var gitData gitServiceRequest
+	var gitData scmServiceRequest
 
 	data := []byte(*msg.Body)
 	json.Unmarshal(data, &sqsMessage)

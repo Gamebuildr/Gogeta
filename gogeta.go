@@ -17,7 +17,9 @@ func StartServer() {
 	var port string = GetPort()
 	logger.Info("Gogeta Server Started")
 	err := http.ListenAndServe(port, nil)
-	logger.LogData(err, "Start Server")
+	if err != nil {
+		logger.Error(err.Error())
+	}
 }
 
 func GetPort() string {

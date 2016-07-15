@@ -23,8 +23,9 @@ func GitProcessSQSMessages(gitReq scmServiceRequest) error {
 
 func GitShallowClone(data scmServiceRequest) {
 	var uuid uuid.UUID = uuid.NewV4()
-	folder := config.File.RepoPath + data.Usr + "/" + data.Project + "_" + uuid.String()
-	cmd := exec.Command("git", "clone", "--depth", "2", data.Repo, folder)
+	relativePath := data.Project + "_" + uuid.String()
+	repoPath := config.File.RepoPath + relativePath
+	cmd := exec.Command("git", "clone", "--depth", "2", data.Repo, repoPath)
 
 	logfile := logger.GetLogFile()
 	defer logfile.Close()
@@ -41,7 +42,7 @@ func GitShallowClone(data scmServiceRequest) {
 		gitData := &GogetaRepo{
 			data.Usr,
 			data.Repo,
-			folder,
+			relativePath,
 			data.SCMType,
 			data.Engine,
 			data.Platform,
@@ -54,7 +55,7 @@ func GitShallowClone(data scmServiceRequest) {
 func UpdateGitRepositories() {
 	repos := FindAllRepos()
 	for i := 0; i < len(repos); i++ {
-		folder := repos[i].Folder
+		folder := config.File.RepoPath + repos[i].Folder
 		repo, err := git.OpenRepository(folder)
 		if err != nil {
 			logger.Error(err.Error())
@@ -101,7 +102,7 @@ func GetRemoteBranch(repo *git.Repository) *git.Reference {
 
 func FetchLatestsUpdates(data GogetaRepo) {
 	cmd := exec.Command("git", "fetch", "--depth", "1", "origin", "master")
-	cmd.Dir = data.Folder
+	cmd.Dir = config.File.RepoPath + data.Folder
 
 	commandErr := cmd.Start()
 	logger.LogError(commandErr, "Git Fetch")

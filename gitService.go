@@ -40,6 +40,7 @@ func GitShallowClone(data scmServiceRequest) {
 	logger.LogError(cloneErr, "Git Clone")
 	if cloneErr == nil {
 		gitData := &GogetaRepo{
+			data.Id,
 			data.Usr,
 			data.Repo,
 			relativePath,

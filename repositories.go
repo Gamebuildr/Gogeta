@@ -6,6 +6,7 @@ import (
 )
 
 type GogetaRepo struct {
+	Id       string
 	Usr      string
 	Repo     string
 	Folder   string

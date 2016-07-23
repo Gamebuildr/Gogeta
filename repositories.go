@@ -6,7 +6,7 @@ import (
 )
 
 type GogetaRepo struct {
-	Id       string
+	BuildrId string
 	Usr      string
 	Repo     string
 	Folder   string

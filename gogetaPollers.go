@@ -9,7 +9,7 @@ import (
 )
 
 type scmServiceRequest struct {
-	Id       string `json:"id"`
+	Id      string `json:"id"`
 	Usr      string `json:"usr"`
 	Repo     string `json:"repo"`
 	Project  string `json:"project"`

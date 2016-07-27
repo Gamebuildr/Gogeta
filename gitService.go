@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
+	"os/exec"
+
 	"github.com/herman-rogers/gogeta/config"
 	"github.com/herman-rogers/gogeta/logger"
 	git "github.com/libgit2/git2go"
 	"github.com/satori/go.uuid"
-	"os/exec"
 )
 
 const UP_TO_DATE = "UP_TO_DATE"
@@ -22,9 +23,7 @@ func GitProcessSQSMessages(gitReq scmServiceRequest) error {
 }
 
 func GitShallowClone(data scmServiceRequest) {
-	var uuid uuid.UUID = uuid.NewV4()
-	relativePath := data.Project + "_" + uuid.String()
-	repoPath := config.File.RepoPath + relativePath
+	repoPath, relativePath := GetRepoPath(data.Project)
 	cmd := exec.Command("git", "clone", "--depth", "2", data.Repo, repoPath)
 
 	logfile := logger.GetLogFile()
@@ -51,6 +50,13 @@ func GitShallowClone(data scmServiceRequest) {
 		go SaveRepo(*gitData)
 		go TriggerMrRobotBuild(*gitData)
 	}
+}
+
+func GetRepoPath(project string) (string, string) {
+	var uuid uuid.UUID = uuid.NewV4()
+	relativePath := project + "_" + uuid.String()
+	repoPath := config.File.RepoPath + relativePath
+	return repoPath, relativePath
 }
 
 func UpdateGitRepositories() {

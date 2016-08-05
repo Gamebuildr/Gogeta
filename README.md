@@ -1,5 +1,5 @@
 # Gogeta
-A open source SCM micro service for monitoring and updating repositories.
+An open source SCM micro service for monitoring and updating repositories.
 
  * Runs on Heroku
  * Supports Git
@@ -10,14 +10,10 @@ A open source SCM micro service for monitoring and updating repositories.
 Checkout the milestone list to see where this project is heading and how far along we are in development.
 
 
-## Quick API
-
-### Install
+## Quick Install
 
 To run the app make sure to add all the go tools to your $PATH. Then cd into the cloned directory, run go install then gogeta. This will run the micro service and make the API available for debugging. Make sure port 9000 is open.
 
-### Git shallow clone
+### Usage
 
-```javascript
-curl -XPOST -d'{"usr":"you","repo":"your.repo.url","project":"your.project"}' localhost:9000/0/gitclone
-```
+Documentation coming soon!

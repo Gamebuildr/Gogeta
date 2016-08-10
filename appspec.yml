@@ -1,5 +1,5 @@
 version: 0.0
 os: linux
 files:
-    - source: gogeta/
-      destination: /var/www
+    - source: /
+      destination: /var/www/gogeta

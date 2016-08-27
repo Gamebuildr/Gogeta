@@ -1,12 +1,6 @@
 # Gogeta
 An open source SCM micro service for monitoring and updating repositories.
 
- * Runs on Heroku
- * Supports Git
- * Repos are saved to Amazon S3
- * Future planned support for SVN
- * Future planned support for Perforce
-
 Checkout the milestone list to see where this project is heading and how far along we are in development.
 
 

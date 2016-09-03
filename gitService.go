@@ -47,6 +47,7 @@ func GitShallowClone(data scmServiceRequest) {
 			data.Engine,
 			data.Platform,
 		}
+		CreateGitCredentials(repoPath)
 		go SaveRepo(*gitData)
 		go TriggerMrRobotBuild(*gitData)
 	}
@@ -57,6 +58,20 @@ func GetRepoPath(project string) (string, string) {
 	relativePath := project + "_" + uuid.String()
 	repoPath := config.File.RepoPath + relativePath
 	return repoPath, relativePath
+}
+
+func CreateGitCredentials(repoLocation string) {
+	gitConfigUser := exec.Command("sudo", "cd", repoLocation, "&&", "git", "config", "user.name", "Gamebuildr")
+	gitConfigEmail := exec.Command("sudo", "cd", repoLocation, "&&", "git", "config", "user.email", "contact@gamebuildr.io")
+
+	gitConfigUserErr := gitConfigUser.Start()
+	if gitConfigUserErr != nil {
+		logger.LogError(gitConfigUserErr, "Git Config Set User.Name: ")
+	}
+	gitConfigEmailErr := gitConfigEmail.Start()
+	if gitConfigEmailErr != nil {
+		logger.LogError(gitConfigEmailErr, "Git Config Email")
+	}
 }
 
 func UpdateGitRepositories() {

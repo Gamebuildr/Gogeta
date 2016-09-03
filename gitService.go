@@ -60,17 +60,22 @@ func GetRepoPath(project string) (string, string) {
 	return repoPath, relativePath
 }
 
-func CreateGitCredentials(repoLocation string) {
-	gitConfigUser := exec.Command("sudo", "cd", repoLocation, "&&", "git", "config", "user.name", "Gamebuildr")
-	gitConfigEmail := exec.Command("sudo", "cd", repoLocation, "&&", "git", "config", "user.email", "contact@gamebuildr.io")
-
-	gitConfigUserErr := gitConfigUser.Start()
-	if gitConfigUserErr != nil {
-		logger.LogError(gitConfigUserErr, "Git Config Set User.Name: ")
+func CreateGitCredentials(repo string) {
+	openRepo, err := git.OpenRepository(repo)
+	if err != nil {
+		logger.LogError(err, "Git Create Credentials")
 	}
-	gitConfigEmailErr := gitConfigEmail.Start()
-	if gitConfigEmailErr != nil {
-		logger.LogError(gitConfigEmailErr, "Git Config Email")
+	config, configErr := openRepo.Config()
+	if configErr != nil {
+		logger.LogError(configErr, "Git Config Set")
+	}
+	configNameErr := config.SetString("user.name", "gamebuildr")
+	if configNameErr != nil {
+		logger.LogError(configNameErr, "Git Config Name")
+	}
+	configEmailErr := config.SetString("user.email", "contact@gamebuildr.io")
+	if configEmailErr != nil {
+		logger.LogError(configEmailErr, "Git Config Email")
 	}
 }
 

@@ -6,13 +6,14 @@ import (
 )
 
 type GogetaRepo struct {
-	BuildrId string
-	Usr      string
-	Repo     string
-	Folder   string
-	SCMType  string
-	Engine   string
-	Platform string
+	BuildrId   string
+	Usr        string
+	Repo       string
+	Folder     string
+	SCMType    string
+	Engine     string
+	Platform   string
+	BuildCount int
 }
 
 func SaveRepo(repo GogetaRepo) {

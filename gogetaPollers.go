@@ -9,13 +9,14 @@ import (
 )
 
 type scmServiceRequest struct {
-	Id      string `json:"id"`
-	Usr      string `json:"usr"`
-	Repo     string `json:"repo"`
-	Project  string `json:"project"`
-	SCMType  string `json:"scmtype"`
-	Engine   string `json:"engine"`
-	Platform string `json:"platform"`
+	Id         string `json:"id"`
+	Usr        string `json:"usr"`
+	Repo       string `json:"repo"`
+	Project    string `json:"project"`
+	SCMType    string `json:"scmtype"`
+	Engine     string `json:"engine"`
+	Platform   string `json:"platform"`
+	Buildcount int    `json:"buildcount"`
 }
 
 type SQSMessage struct {

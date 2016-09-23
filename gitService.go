@@ -26,6 +26,9 @@ func GitShallowClone(data scmServiceRequest) {
 	repoPath, relativePath := GetRepoPath(data.Project)
 	cmd := exec.Command("git", "clone", "--depth", "2", data.Repo, repoPath)
 
+	cloneMsgDev := "git clone --depth 2 " + data.Repo + " " + repoPath
+	SendGitMessage(data.Id, "git clone started", cloneMsgDev)
+
 	logfile := logger.GetLogFile()
 	defer logfile.Close()
 
@@ -34,10 +37,18 @@ func GitShallowClone(data scmServiceRequest) {
 
 	commandErr := cmd.Start()
 	logger.LogError(commandErr, "Git Clone")
+	if commandErr != nil {
+		SendGitMessage(data.Id, "git clone failed", commandErr.Error())
+	}
 
 	cloneErr := cmd.Wait()
 	logger.LogError(cloneErr, "Git Clone")
+	if cloneErr != nil {
+		SendGitMessage(data.Id, "git clone failed", cloneErr.Error())
+	}
 	if cloneErr == nil {
+		cloneSuccess := "git clone succeded"
+		SendGitMessage(data.Id, cloneSuccess, cloneSuccess)
 		gitData := &GogetaRepo{
 			data.Id,
 			data.Usr,
@@ -46,11 +57,23 @@ func GitShallowClone(data scmServiceRequest) {
 			data.SCMType,
 			data.Engine,
 			data.Platform,
+			data.Buildcount,
 		}
 		CreateGitCredentials(repoPath)
 		go SaveRepo(*gitData)
 		go TriggerMrRobotBuild(*gitData)
 	}
+}
+
+func SendGitMessage(data string, message string, devMessage string) {
+	gitMessage := GamebuildrMessage{
+		data,
+		"4",
+		message,
+		devMessage,
+		"BUILDR_MESSAGE",
+	}
+	SendGamebuildrMessage(gitMessage)
 }
 
 func GetRepoPath(project string) (string, string) {

@@ -13,7 +13,7 @@ func PublishMessageToSns(msg string, snsEndpoint string, awsRegion string) {
 
 	params := &sns.PublishInput{
 		Message:  aws.String(msg),
-		Subject:  aws.String("Gogeta Build Request"),
+		Subject:  aws.String("Gogeta Message"),
 		TopicArn: aws.String(snsEndpoint),
 	}
 	_, err := svc.Publish(params)

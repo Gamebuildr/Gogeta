@@ -11,6 +11,7 @@ type Config struct {
 	AmazonSQS             string `json:"amazonsqs"`
 	AWSRegion             string `json:"awsregion"`
 	MrRobotSNSEndpoint    string `json:"mrrobotsnsendpoint"`
+	GamebuildrSNSEndpoint string `json:"gamebuildrsnsendpoint"`
 }
 
 var File Config

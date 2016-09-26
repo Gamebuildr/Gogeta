@@ -9,7 +9,7 @@ import (
 
 type GamebuildrMessage struct {
 	BuildrId   string `json:"buildrid"`
-	BuildCount string `json:"buildcount"`
+	BuildCount int    `json:"buildcount"`
 	Message    string `json:"message"`
 	DevMessage string `json:"devmessage"`
 	Type       string `json:"type"`

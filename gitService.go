@@ -27,7 +27,7 @@ func GitShallowClone(data scmServiceRequest) {
 	cmd := exec.Command("git", "clone", "--depth", "2", data.Repo, repoPath)
 
 	cloneMsgDev := "git clone --depth 2 " + data.Repo + " " + repoPath
-	SendGitMessage(data.Id, "git clone started", cloneMsgDev)
+	SendGitMessage(data, "git clone started", cloneMsgDev)
 
 	logfile := logger.GetLogFile()
 	defer logfile.Close()
@@ -38,17 +38,17 @@ func GitShallowClone(data scmServiceRequest) {
 	commandErr := cmd.Start()
 	logger.LogError(commandErr, "Git Clone")
 	if commandErr != nil {
-		SendGitMessage(data.Id, "git clone failed", commandErr.Error())
+		SendGitMessage(data, "git clone failed", commandErr.Error())
 	}
 
 	cloneErr := cmd.Wait()
 	logger.LogError(cloneErr, "Git Clone")
 	if cloneErr != nil {
-		SendGitMessage(data.Id, "git clone failed", cloneErr.Error())
+		SendGitMessage(data, "git clone failed", cloneErr.Error())
 	}
 	if cloneErr == nil {
 		cloneSuccess := "git clone succeded"
-		SendGitMessage(data.Id, cloneSuccess, cloneSuccess)
+		SendGitMessage(data, cloneSuccess, cloneSuccess)
 		gitData := &GogetaRepo{
 			data.Id,
 			data.Usr,
@@ -65,10 +65,10 @@ func GitShallowClone(data scmServiceRequest) {
 	}
 }
 
-func SendGitMessage(data string, message string, devMessage string) {
+func SendGitMessage(data scmServiceRequest, message string, devMessage string) {
 	gitMessage := GamebuildrMessage{
-		data,
-		"4",
+		data.Id,
+		data.Buildcount,
 		message,
 		devMessage,
 		"BUILDR_MESSAGE",

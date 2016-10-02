@@ -35,15 +35,13 @@ func FindAllRepos() []GogetaRepo {
 	return results
 }
 
-func FindRepo(usr string, repo string) {
+func FindRepo(usr string, id string) GogetaRepo {
 	result := GogetaRepo{}
 	session := ConnectToMongoDB()
 	defer session.Close()
 
 	c := session.DB("gogeta").C("repos")
-	err := c.Find(bson.M{"usr": usr, "repo": repo}).One(&result)
+	err := c.Find(bson.M{"usr": usr, "buildrid": id}).One(&result)
 	logger.LogData(err, "Find Repo")
-	if err == nil {
-		logger.Info(result.Folder)
-	}
+	return result
 }

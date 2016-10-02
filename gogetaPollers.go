@@ -17,6 +17,7 @@ type scmServiceRequest struct {
 	Engine     string `json:"engine"`
 	Platform   string `json:"platform"`
 	Buildcount int    `json:"buildcount"`
+	Type       string `json:"type"`
 }
 
 type SQSMessage struct {

@@ -28,7 +28,7 @@ func SendGamebuildrMessage(data GamebuildrMessage) {
 
 func BuildAfterMerge(err error, msg string, data GogetaRepo) {
 	if err != nil {
-		logger.LogError(err, msg+data.Folder)
+		logger.LogError(err, msg + data.Folder)
 		return
 	}
 	go TriggerMrRobotBuild(data)

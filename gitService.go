@@ -14,11 +14,18 @@ const UP_TO_DATE = "UP_TO_DATE"
 const NORMAL_MERGE = "NORMAL_MERGE"
 const FAST_FORWARD = "FAST_FORWARD"
 
-func GitProcessSQSMessages(gitReq scmServiceRequest) error {
-	if gitReq.Usr == "" || gitReq.Project == "" || gitReq.Repo == "" {
+func GitProcessSQSMessages(data scmServiceRequest) error {
+	if data.Usr == "" || data.Project == "" || data.Repo == "" {
+		message := "Missing git data"
+		SendGitMessage(data, message, message)
 		return errors.New("Missing Git Service Properties")
 	}
-	go GitShallowClone(gitReq)
+	switch data.Type {
+	case "GOGETA_CLONE":
+		go GitShallowClone(data)
+	case "GOGETA_NEW_BUILD":
+		go RunNewGitBuild(data)
+	}
 	return nil
 }
 
@@ -63,6 +70,12 @@ func GitShallowClone(data scmServiceRequest) {
 		go SaveRepo(*gitData)
 		go TriggerMrRobotBuild(*gitData)
 	}
+}
+
+func RunNewGitBuild(data scmServiceRequest) {
+	repoData := FindRepo(data.Usr, data.Id)
+	repoData.BuildCount = data.Buildcount
+	go TriggerMrRobotBuild(repoData)
 }
 
 func SendGitMessage(data scmServiceRequest, message string, devMessage string) {
@@ -112,7 +125,7 @@ func UpdateGitRepositories() {
 			continue
 		}
 		if repo.IsBare() {
-			continue
+			return
 		}
 		go GitPull(repos[i], repo)
 	}

@@ -14,14 +14,6 @@ func main() {
 }
 
 func StartServer() {
-	// message := GamebuildrMessage{
-	// 	"57db1bb72777ad06afab65e1",
-	// 	"0",
-	// 	"Gogeta Message Test",
-	// 	"Gogeta DevMessage Test",
-	// 	"BUILDR_MESSAGE",
-	// }
-	// SendGamebuildrMessage(message)
 	var port string = GetPort()
 	logger.Info("Gogeta Server Started")
 	err := http.ListenAndServe(port, nil)

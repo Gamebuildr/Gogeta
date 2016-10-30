@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/herman-rogers/gogeta/config"
-	"github.com/herman-rogers/gogeta/logger"
 	"net/http"
 	"os"
+
+	"github.com/herman-rogers/gogeta/config"
+	"github.com/herman-rogers/gogeta/logger"
 )
 
 func main() {

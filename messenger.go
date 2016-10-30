@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+
 	"github.com/herman-rogers/gogeta/config"
 	"github.com/herman-rogers/gogeta/logger"
 	"github.com/herman-rogers/gogeta/messages"
@@ -28,7 +29,7 @@ func SendGamebuildrMessage(data GamebuildrMessage) {
 
 func BuildAfterMerge(err error, msg string, data GogetaRepo) {
 	if err != nil {
-		logger.LogError(err, msg + data.Folder)
+		logger.LogError(err, msg+data.Folder)
 		return
 	}
 	go TriggerMrRobotBuild(data)

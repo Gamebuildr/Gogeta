@@ -24,6 +24,16 @@ func SaveRepo(repo GogetaRepo) {
 	logger.LogData(err, "Save Repo")
 }
 
+func UpdateRepo(repo GogetaRepo) {
+	session := ConnectToMongoDB()
+	usr := repo.Usr
+	id := repo.BuildrId
+	defer session.Close()
+	c := session.DB("gogeta").C("repos")
+	err := c.Update(bson.M{"usr": usr, "buildrid": id}, repo)
+	logger.LogError(err, "Update One Repo")
+}
+
 func FindAllRepos() []GogetaRepo {
 	var results []GogetaRepo
 	session := ConnectToMongoDB()

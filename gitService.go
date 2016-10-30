@@ -7,7 +7,7 @@ import (
 	"github.com/herman-rogers/gogeta/config"
 	"github.com/herman-rogers/gogeta/logger"
 	git "github.com/libgit2/git2go"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 const UP_TO_DATE = "UP_TO_DATE"
@@ -17,7 +17,11 @@ const FAST_FORWARD = "FAST_FORWARD"
 func GitProcessSQSMessages(data scmServiceRequest) error {
 	if data.Usr == "" || data.Project == "" || data.Repo == "" {
 		message := "Missing git data"
-		SendGitMessage(data, message, message)
+		SendRawMessage(
+			data.Id,
+			data.Buildcount,
+			message,
+			message)
 		return errors.New("Missing Git Service Properties")
 	}
 	switch data.Type {
@@ -34,7 +38,11 @@ func GitShallowClone(data scmServiceRequest) {
 	cmd := exec.Command("git", "clone", "--depth", "2", data.Repo, repoPath)
 
 	cloneMsgDev := "git clone --depth 2 " + data.Repo + " " + repoPath
-	SendGitMessage(data, "git clone started", cloneMsgDev)
+	SendRawMessage(
+		data.Id,
+		data.Buildcount,
+		"git clone started",
+		cloneMsgDev)
 
 	logfile := logger.GetLogFile()
 	defer logfile.Close()
@@ -45,17 +53,29 @@ func GitShallowClone(data scmServiceRequest) {
 	commandErr := cmd.Start()
 	logger.LogError(commandErr, "Git Clone")
 	if commandErr != nil {
-		SendGitMessage(data, "git clone failed", commandErr.Error())
+		SendRawMessage(
+			data.Id,
+			data.Buildcount,
+			"git clone failed",
+			commandErr.Error())
 	}
 
 	cloneErr := cmd.Wait()
 	logger.LogError(cloneErr, "Git Clone")
 	if cloneErr != nil {
-		SendGitMessage(data, "git clone failed", cloneErr.Error())
+		SendRawMessage(
+			data.Id,
+			data.Buildcount,
+			"git clone failed",
+			cloneErr.Error())
 	}
 	if cloneErr == nil {
 		cloneSuccess := "git clone succeded"
-		SendGitMessage(data, cloneSuccess, cloneSuccess)
+		SendRawMessage(
+			data.Id,
+			data.Buildcount,
+			cloneSuccess,
+			cloneSuccess)
 		gitData := &GogetaRepo{
 			data.Id,
 			data.Usr,
@@ -73,20 +93,32 @@ func GitShallowClone(data scmServiceRequest) {
 }
 
 func RunNewGitBuild(data scmServiceRequest) {
-	repoData := FindRepo(data.Usr, data.Id)
-	repoData.BuildCount = data.Buildcount
-	go TriggerMrRobotBuild(repoData)
-}
-
-func SendGitMessage(data scmServiceRequest, message string, devMessage string) {
-	gitMessage := GamebuildrMessage{
+	gitData := FindRepo(data.Usr, data.Id)
+	gitData.BuildCount = data.Buildcount + 1
+	// put raw message in new build
+	SendRawMessage(
 		data.Id,
 		data.Buildcount,
-		message,
-		devMessage,
-		"BUILDR_MESSAGE",
+		"new build started",
+		"new build started")
+	go TriggerMrRobotBuild(gitData)
+	go UpdateRepo(gitData)
+}
+
+func UpdateGitRepositories() {
+	repos := FindAllRepos()
+	for i := 0; i < len(repos); i++ {
+		folder := config.File.RepoPath + repos[i].Folder
+		repo, err := git.OpenRepository(folder)
+		if err != nil {
+			logger.Error(err.Error())
+			continue
+		}
+		if repo.IsBare() {
+			return
+		}
+		go GitPull(repos[i], repo)
 	}
-	SendGamebuildrMessage(gitMessage)
 }
 
 func GetRepoPath(project string) (string, string) {
@@ -115,24 +147,8 @@ func CreateGitCredentials(repo string) {
 	}
 }
 
-func UpdateGitRepositories() {
-	repos := FindAllRepos()
-	for i := 0; i < len(repos); i++ {
-		folder := config.File.RepoPath + repos[i].Folder
-		repo, err := git.OpenRepository(folder)
-		if err != nil {
-			logger.Error(err.Error())
-			continue
-		}
-		if repo.IsBare() {
-			return
-		}
-		go GitPull(repos[i], repo)
-	}
-}
-
-func GitPull(data GogetaRepo, repo *git.Repository) {
-	FetchLatestsUpdates(data)
+func GitPull(gitData GogetaRepo, repo *git.Repository) {
+	FetchLatestsUpdates(gitData)
 	remoteBranch := GetRemoteBranch(repo)
 	remoteBranchID := remoteBranch.Target()
 
@@ -148,13 +164,40 @@ func GitPull(data GogetaRepo, repo *git.Repository) {
 		break
 	case NORMAL_MERGE:
 		err := MergeNormal(repo, remoteBranch, remoteBranchID)
-		BuildAfterMerge(err, msg, data)
+		gitData.BuildCount = gitData.BuildCount + 1
+		//put raw message in new build
+		SendRawMessage(
+			gitData.BuildrId,
+			gitData.BuildCount,
+			"new code changes detected",
+			"git merge origin master")
+		BuildAfterMerge(err, msg, gitData)
+		go UpdateRepo(gitData)
 		break
 	case FAST_FORWARD:
 		err := MergeFastForward(repo, remoteBranchID)
-		BuildAfterMerge(err, msg, data)
+		gitData.BuildCount = gitData.BuildCount + 1
+		//put raw message in new build
+		SendRawMessage(
+			gitData.BuildrId,
+			gitData.BuildCount,
+			"new code changes detected",
+			"git merge fast forward")
+		BuildAfterMerge(err, msg, gitData)
+		go UpdateRepo(gitData)
 		break
 	}
+}
+
+func SendRawMessage(dataId string, dataCount int, message string, devMessage string) {
+	gitMessage := GamebuildrMessage{
+		dataId,
+		dataCount,
+		message,
+		devMessage,
+		"BUILDR_MESSAGE",
+	}
+	SendGamebuildrMessage(gitMessage)
 }
 
 func GetRemoteBranch(repo *git.Repository) *git.Reference {

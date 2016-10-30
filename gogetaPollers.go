@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/herman-rogers/gogeta/logger"
 	"github.com/herman-rogers/gogeta/poller"

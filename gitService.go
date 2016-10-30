@@ -97,8 +97,8 @@ func RunNewGitBuild(data scmServiceRequest) {
 	gitData.BuildCount = data.Buildcount + 1
 	// put raw message in new build
 	SendRawMessage(
-		data.Id,
-		data.Buildcount,
+		gitData.BuildrId,
+		gitData.BuildCount,
 		"new build started",
 		"new build started")
 	go TriggerMrRobotBuild(gitData)

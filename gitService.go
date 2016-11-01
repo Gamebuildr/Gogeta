@@ -94,7 +94,7 @@ func GitShallowClone(data scmServiceRequest) {
 
 func RunNewGitBuild(data scmServiceRequest) {
 	gitData := FindRepo(data.Usr, data.Id)
-	gitData.BuildCount = data.Buildcount + 1
+	gitData.BuildCount = gitData.BuildCount + 1
 	// put raw message in new build
 	SendRawMessage(
 		gitData.BuildrId,

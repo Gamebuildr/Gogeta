@@ -70,7 +70,7 @@ func GitShallowClone(data scmServiceRequest) {
 			cloneErr.Error())
 	}
 	if cloneErr == nil {
-		cloneSuccess := "git clone succeded"
+		cloneSuccess := "git clone succeeded"
 		SendRawMessage(
 			data.Id,
 			data.Buildcount,

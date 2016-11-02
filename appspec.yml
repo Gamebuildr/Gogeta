@@ -3,3 +3,9 @@ os: linux
 files:
     - source: /
       destination: /var/www/src/github.com/herman-rogers/gogeta
+hooks:
+    AfterInstall:
+      - location: CompileGo.sh
+      - location: RestartSupervisor.sh
+        timeout: 180
+        runas: ubuntu

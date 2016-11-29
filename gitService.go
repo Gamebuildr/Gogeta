@@ -4,8 +4,8 @@ import (
 	"errors"
 	"os/exec"
 
-	"github.com/herman-rogers/gogeta/config"
 	"github.com/herman-rogers/gogeta/logger"
+	"github.com/herman-rogers/gogeta/tools"
 	git "github.com/libgit2/git2go"
 	uuid "github.com/satori/go.uuid"
 )

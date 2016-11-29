@@ -8,20 +8,17 @@ import (
 	"fmt"
 )
 
+var config = "../config.json"
+
 // Config interface
 type Config interface {
 	GetConfigKey(key string) (string, error)
 	SetConfigKey(key, val string) error
-	CreateConfig() error
+	ReadConfig(config []byte)
 }
 
 // InMemoryConfig is the config loaded into memory
 type InMemoryConfig struct {
-	// RepoPath              string `json:"repopath"`
-	// AmazonSQS             string `json:"amazonsqs"`
-	// AWSRegion             string `json:"awsregion"`
-	// MrRobotSNSEndpoint    string `json:"mrrobotsnsendpoint"`
-	// GamebuildrSNSEndpoint string `json:"gamebuildrsnsendpoint"`
 	Datamap map[string]string
 }
 
@@ -45,41 +42,22 @@ func (c InMemoryConfig) SetConfigKey(key, val string) error {
 
 // CreateConfig creates the config from json data
 func CreateConfig() error {
-	MainConfig.Datamap = make(map[string]string, 100)
-	config := getConfig()
-	fmt.Printf(config[0])
-	for i := range config {
-		fmt.Printf(config[i])
+	raw, err := ioutil.ReadFile(config)
+	if err != nil {
+		fmt.Printf(err.Error())
+		return err
 	}
+	configData := MainConfig.ReadConfig(raw)
+	MainConfig.Datamap = configData
 	return nil
 }
 
-//var File InMemoryConfig
-
-// func Load() {
-// 	config := GetConfig()
-// 	File = config
-// }
-
-func getConfig() []string {
-	raw, err := ioutil.ReadFile("../config.json")
+// ReadConfig read a specified json config file and return map
+func (c InMemoryConfig) ReadConfig(config []byte) map[string]string {
+	jsonMap := map[string]string{}
+	err := json.Unmarshal([]byte(config), &jsonMap)
 	if err != nil {
 		fmt.Printf(err.Error())
-		//logger.Error(err.Error())
 	}
-	var c []string
-	json.Unmarshal(raw, &c)
-	return c
+	return jsonMap
 }
-
-// func (p InMemoryConfig) toString() string {
-// 	return toJson(p)
-// }
-
-// func toJson(p interface{}) string {
-// 	bytes, err := json.Marshal(p)
-// 	if err != nil {
-// 		logger.Error(err.Error())
-// 	}
-// 	return string(bytes)
-// }

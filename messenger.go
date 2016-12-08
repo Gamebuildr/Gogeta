@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 
-	"github.com/herman-rogers/gogeta/config"
 	"github.com/herman-rogers/gogeta/logger"
 	"github.com/herman-rogers/gogeta/messages"
+	"github.com/herman-rogers/gogeta/tools"
 )
 
 type GamebuildrMessage struct {

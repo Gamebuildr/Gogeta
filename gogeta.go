@@ -1,32 +1,37 @@
 package main
 
 import (
-	"net/http"
-	"os"
+    "net/http"
+    "os"
 
-	"github.com/herman-rogers/gogeta/logger"
-	"github.com/herman-rogers/gogeta/tools"
+    "github.com/herman-rogers/Gogeta/config"
+    "github.com/herman-rogers/Gogeta/logger"
 )
 
 func main() {
-	config.Load()
-	StartAppPoller()
-	StartServer()
+    setupConfig()
+    StartAppPoller()
+    startServer()
 }
 
-func StartServer() {
-	var port string = GetPort()
-	logger.Info("Gogeta Server Started")
-	err := http.ListenAndServe(port, nil)
-	if err != nil {
-		logger.Error(err.Error())
-	}
+func setupConfig() {
+    config.SetConfigFile("./config.json")
+    config.CreateConfig()
 }
 
-func GetPort() string {
-	var port = os.Getenv("PORT")
-	if port == "" {
-		port = "9000"
-	}
-	return ":" + port
+func startServer() {
+    var port = getPort()
+    logger.Info("Gogeta Server Started")
+    err := http.ListenAndServe(port, nil)
+    if err != nil {
+        logger.Error(err.Error())
+    }
+}
+
+func getPort() string {
+    var port = os.Getenv("PORT")
+    if port == "" {
+        port = "9000"
+    }
+    return ":" + port
 }

@@ -1,47 +1,61 @@
 package main
 
 import (
-	"encoding/json"
+    "encoding/json"
+    "fmt"
 
-	"github.com/herman-rogers/gogeta/logger"
-	"github.com/herman-rogers/gogeta/messages"
-	"github.com/herman-rogers/gogeta/tools"
+    "github.com/herman-rogers/Gogeta/config"
+    "github.com/herman-rogers/Gogeta/logger"
+    "github.com/herman-rogers/Gogeta/messages"
 )
 
 type GamebuildrMessage struct {
-	BuildrId   string `json:"buildrid"`
-	BuildCount int    `json:"buildcount"`
-	Message    string `json:"message"`
-	DevMessage string `json:"devmessage"`
-	Type       string `json:"type"`
+    BuildrId   string `json:"buildrid"`
+    BuildCount int    `json:"buildcount"`
+    Message    string `json:"message"`
+    DevMessage string `json:"devmessage"`
+    Type       string `json:"type"`
 }
 
 func SendGamebuildrMessage(data GamebuildrMessage) {
-	AWS_REGION := config.File.AWSRegion
-	GAMEBUILDR_SNS_ENDPOINT := config.File.GamebuildrSNSEndpoint
-	jsonMsg, err := json.Marshal(data)
-	if err != nil {
-		logger.Error(err.Error())
-		return
-	}
-	messages.PublishMessageToSns(string(jsonMsg), GAMEBUILDR_SNS_ENDPOINT, AWS_REGION)
+    gamebuildrSNSEndpoint, endpointErr := config.MainConfig.GetConfigKey("GamebuildrSNSEndpoint")
+    if endpointErr != nil {
+        fmt.Printf(endpointErr.Error())
+    }
+    awsRegion, regionErr := config.MainConfig.GetConfigKey("AWSRegion")
+    if regionErr != nil {
+        fmt.Printf(regionErr.Error())
+    }
+
+    jsonMsg, err := json.Marshal(data)
+    if err != nil {
+        logger.Error(err.Error())
+        return
+    }
+    messages.PublishMessageToSns(string(jsonMsg), gamebuildrSNSEndpoint, awsRegion)
 }
 
 func BuildAfterMerge(err error, msg string, data GogetaRepo) {
-	if err != nil {
-		logger.LogError(err, msg+data.Folder)
-		return
-	}
-	go TriggerMrRobotBuild(data)
+    if err != nil {
+        logger.LogError(err, msg+data.Folder)
+        return
+    }
+    go TriggerMrRobotBuild(data)
 }
 
 func TriggerMrRobotBuild(data GogetaRepo) {
-	AWS_REGION := config.File.AWSRegion
-	MRROBOT_SNS_ENDPOINT := config.File.MrRobotSNSEndpoint
-	jsonMsg, err := json.Marshal(data)
-	if err != nil {
-		logger.Error(err.Error())
-		return
-	}
-	messages.PublishMessageToSns(string(jsonMsg), MRROBOT_SNS_ENDPOINT, AWS_REGION)
+    mrRobotSNSEndpoint, endpointErr := config.MainConfig.GetConfigKey("MrRobotSNSEndpoint")
+    if endpointErr != nil {
+        fmt.Printf(endpointErr.Error())
+    }
+    awsRegion, regionErr := config.MainConfig.GetConfigKey("AWSRegion")
+    if regionErr != nil {
+        fmt.Printf(regionErr.Error())
+    }
+    jsonMsg, err := json.Marshal(data)
+    if err != nil {
+        logger.Error(err.Error())
+        return
+    }
+    messages.PublishMessageToSns(string(jsonMsg), mrRobotSNSEndpoint, awsRegion)
 }

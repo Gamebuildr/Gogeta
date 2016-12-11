@@ -1,18 +1,19 @@
-package main;
+package main
 
 import (
     "os/exec"
-    "github.com/herman-rogers/gogeta/logger"
+
+    "github.com/herman-rogers/Gogeta/logger"
 )
 
 func MoveFolderToLocation(folder string, location string) {
-	cmd := exec.Command("mv", folder, location)
-	logfile := logger.GetLogFile()
-	defer logfile.Close()
+    cmd := exec.Command("mv", folder, location)
+    logfile := logger.GetLogFile()
+    defer logfile.Close()
 
-	cmd.Stdout = logfile
-	cmd.Stderr = logfile
+    cmd.Stdout = logfile
+    cmd.Stderr = logfile
 
-	runcommand := cmd.Start()
-	logger.LogData(runcommand, "Upload to S3")
+    runcommand := cmd.Start()
+    logger.LogData(runcommand, "Upload to S3")
 }

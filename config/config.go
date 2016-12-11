@@ -1,44 +1,78 @@
 package config
 
 import (
-	"encoding/json"
-	"github.com/herman-rogers/gogeta/logger"
-	"io/ioutil"
+    "encoding/json"
+    "errors"
+    "io/ioutil"
+
+    "fmt"
 )
 
-type Config struct {
-	RepoPath              string `json:"repopath"`
-	AmazonSQS             string `json:"amazonsqs"`
-	AWSRegion             string `json:"awsregion"`
-	MrRobotSNSEndpoint    string `json:"mrrobotsnsendpoint"`
-	GamebuildrSNSEndpoint string `json:"gamebuildrsnsendpoint"`
+var configFile = ""
+
+// Config interface
+type Config interface {
+    GetConfigKey(key string) (string, error)
+    SetConfigKey(key, val string) error
+    ReadConfig(config []byte)
 }
 
-var File Config
-
-func Load() {
-	config := GetConfig()
-	File = config
+// InMemoryConfig is the config loaded into memory
+type InMemoryConfig struct {
+    Datamap map[string]string
 }
 
-func GetConfig() Config {
-	raw, err := ioutil.ReadFile("./config.json")
-	if err != nil {
-		logger.Error(err.Error())
-	}
-	var c Config
-	json.Unmarshal(raw, &c)
-	return c
+// MainConfig is the main file for use with configs
+var MainConfig InMemoryConfig
+
+// CreateConfig creates the config from json data
+func CreateConfig() error {
+    raw, err := ioutil.ReadFile(configFile)
+    if err != nil {
+        fmt.Printf(err.Error())
+        return err
+    }
+    configData := MainConfig.ReadConfig(raw)
+    MainConfig.Datamap = configData
+    return nil
 }
 
-func (p Config) toString() string {
-	return toJson(p)
+// GetConfigFile returns the current config filepath as string
+func GetConfigFile() string {
+    return configFile
 }
 
-func toJson(p interface{}) string {
-	bytes, err := json.Marshal(p)
-	if err != nil {
-		logger.Error(err.Error())
-	}
-	return string(bytes)
+// SetConfigFile sets the config filepath to newConfig string
+func SetConfigFile(newConfig string) error {
+    _, err := ioutil.ReadFile(newConfig)
+    if err != nil {
+        return err
+    }
+    configFile = newConfig
+    return nil
+}
+
+// GetConfigKey returns a config value specified by key
+func (c InMemoryConfig) GetConfigKey(key string) (string, error) {
+    val, ok := c.Datamap[key]
+    if ok {
+        return val, nil
+    }
+    return "", errors.New("tried to get a key which doesn't exist")
+}
+
+// SetConfigKey sets a config value specified by key and set by val
+func (c InMemoryConfig) SetConfigKey(key, val string) error {
+    c.Datamap[key] = val
+    return nil
+}
+
+// ReadConfig read a specified json config file and return map
+func (c InMemoryConfig) ReadConfig(config []byte) map[string]string {
+    jsonMap := map[string]string{}
+    err := json.Unmarshal([]byte(config), &jsonMap)
+    if err != nil {
+        fmt.Printf(err.Error())
+    }
+    return jsonMap
 }

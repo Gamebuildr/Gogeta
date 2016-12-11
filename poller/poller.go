@@ -1,16 +1,18 @@
 package poller
 
 import (
+    "fmt"
+
     "github.com/aws/aws-sdk-go/aws"
     "github.com/aws/aws-sdk-go/aws/session"
     "github.com/aws/aws-sdk-go/service/sqs"
-    "github.com/herman-rogers/gogeta/logger"
-    "github.com/herman-rogers/gogeta/config"
+    "github.com/herman-rogers/Gogeta/config"
+    "github.com/herman-rogers/Gogeta/logger"
 )
 
 type ProcessFunc func(msg *sqs.Message) error
 
-func( f ProcessFunc ) ProcessMessage(msg *sqs.Message) error {
+func (f ProcessFunc) ProcessMessage(msg *sqs.Message) error {
     return f(msg)
 }
 
@@ -19,23 +21,31 @@ type Process interface {
 }
 
 func Start(process Process) {
-    session := sqs.New(session.New(), &aws.Config{ Region: aws.String(config.File.AWSRegion) })
-    params := &sqs.ReceiveMessageInput {
-        QueueUrl: aws.String(config.File.AmazonSQS),
+    region, regionErr := config.MainConfig.GetConfigKey("AWSRegion")
+    amazonSQS, amazonSQSErr := config.MainConfig.GetConfigKey("AmazonSQS")
+    if regionErr != nil {
+        fmt.Printf(regionErr.Error())
+    }
+    if amazonSQSErr != nil {
+        fmt.Printf(amazonSQSErr.Error())
+    }
+    session := sqs.New(session.New(), &aws.Config{Region: aws.String(region)})
+    params := &sqs.ReceiveMessageInput{
+        QueueUrl:            aws.String(amazonSQS),
         MaxNumberOfMessages: aws.Int64(1),
-        VisibilityTimeout: aws.Int64(1),
-        WaitTimeSeconds: aws.Int64(1),
+        VisibilityTimeout:   aws.Int64(1),
+        WaitTimeSeconds:     aws.Int64(1),
     }
 
     response, err := session.ReceiveMessage(params)
     if err != nil {
         logger.Warning(err.Error())
-        return;
+        return
     }
     messages := response.Messages
-    if(len(messages) > 0) {
+    if len(messages) > 0 {
         InboundMessages(session, messages, process)
-        return;
+        return
     }
 }
 
@@ -49,7 +59,7 @@ func InboundMessages(session *sqs.SQS, messages []*sqs.Message, process Process)
     }
 }
 
-func ProcessInbound( session *sqs.SQS, m *sqs.Message, process Process) error {
+func ProcessInbound(session *sqs.SQS, m *sqs.Message, process Process) error {
     var err error
     err = process.ProcessMessage(m)
     if err != nil {
@@ -61,8 +71,12 @@ func ProcessInbound( session *sqs.SQS, m *sqs.Message, process Process) error {
 }
 
 func RemoveMessageFromPoller(s *sqs.SQS, m *sqs.Message) {
+    amazonSQS, err := config.MainConfig.GetConfigKey("AmazonSQS")
+    if err != nil {
+        fmt.Printf(err.Error())
+    }
     deleteMsg := &sqs.DeleteMessageInput{
-        QueueUrl: aws.String(config.File.AmazonSQS),
+        QueueUrl:      aws.String(amazonSQS),
         ReceiptHandle: m.ReceiptHandle,
     }
     s.DeleteMessage(deleteMsg)

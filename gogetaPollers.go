@@ -4,8 +4,8 @@ import (
     "encoding/json"
 
     "github.com/aws/aws-sdk-go/service/sqs"
-    "github.com/herman-rogers/Gogeta/logger"
-    "github.com/herman-rogers/Gogeta/poller"
+    "github.com/Gamebuildr/Gogeta/logger"
+    "github.com/Gamebuildr/Gogeta/poller"
     "github.com/jasonlvhit/gocron"
 )
 

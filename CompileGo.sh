@@ -1,3 +1,3 @@
-cd /var/www/src/github.com/herman-rogers/gogeta/
+cd /var/www/src/github.com/Gamebuildr/gogeta/
 go install
 echo "Compiling GO..."

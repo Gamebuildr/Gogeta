@@ -3,7 +3,7 @@ package main
 import (
     "os/exec"
 
-    "github.com/herman-rogers/Gogeta/logger"
+    "github.com/Gamebuildr/Gogeta/logger"
 )
 
 func MoveFolderToLocation(folder string, location string) {

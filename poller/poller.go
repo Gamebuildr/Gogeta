@@ -6,8 +6,8 @@ import (
     "github.com/aws/aws-sdk-go/aws"
     "github.com/aws/aws-sdk-go/aws/session"
     "github.com/aws/aws-sdk-go/service/sqs"
-    "github.com/herman-rogers/Gogeta/config"
-    "github.com/herman-rogers/Gogeta/logger"
+    "github.com/Gamebuildr/Gogeta/config"
+    "github.com/Gamebuildr/Gogeta/logger"
 )
 
 type ProcessFunc func(msg *sqs.Message) error

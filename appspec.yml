@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
     - source: /
-      destination: /var/www/src/github.com/herman-rogers/gogeta
+      destination: /var/www/src/github.com/Gamebuildr/gogeta
 hooks:
     AfterInstall:
       - location: CompileGo.sh

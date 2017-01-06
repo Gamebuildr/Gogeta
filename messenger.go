@@ -4,9 +4,9 @@ import (
     "encoding/json"
     "fmt"
 
-    "github.com/herman-rogers/Gogeta/config"
-    "github.com/herman-rogers/Gogeta/logger"
-    "github.com/herman-rogers/Gogeta/messages"
+    "github.com/Gamebuildr/Gogeta/config"
+    "github.com/Gamebuildr/Gogeta/logger"
+    "github.com/Gamebuildr/Gogeta/messages"
 )
 
 type GamebuildrMessage struct {

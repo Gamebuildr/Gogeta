@@ -1,7 +1,7 @@
 package main
 
 import (
-    "github.com/herman-rogers/Gogeta/logger"
+    "github.com/Gamebuildr/Gogeta/logger"
     "gopkg.in/mgo.v2/bson"
 )
 

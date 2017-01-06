@@ -5,10 +5,10 @@ import (
     "fmt"
     "os/exec"
 
-    "github.com/herman-rogers/Gogeta/config"
-    "github.com/herman-rogers/Gogeta/logger"
-    git "github.com/libgit2/git2go"
+    "github.com/Gamebuildr/Gogeta/config"
+    "github.com/Gamebuildr/Gogeta/logger"
     uuid "github.com/satori/go.uuid"
+    git "gopkg.in/libgit2/git2go.v23"
 )
 
 const UP_TO_DATE = "UP_TO_DATE"

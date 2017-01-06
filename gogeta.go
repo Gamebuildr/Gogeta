@@ -4,8 +4,8 @@ import (
     "net/http"
     "os"
 
-    "github.com/herman-rogers/Gogeta/config"
-    "github.com/herman-rogers/Gogeta/logger"
+    "github.com/Gamebuildr/Gogeta/config"
+    "github.com/Gamebuildr/Gogeta/logger"
 )
 
 func main() {

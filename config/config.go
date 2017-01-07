@@ -29,7 +29,7 @@ var MainConfig InMemoryConfig
 func CreateConfig() error {
     raw, err := ioutil.ReadFile(configFile)
     if err != nil {
-        fmt.Printf(err.Error())
+        fmt.Printf("Config Error " + err.Error())
         return err
     }
     configData := MainConfig.ReadConfig(raw)

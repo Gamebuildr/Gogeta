@@ -27,9 +27,10 @@ func GitProcessSQSMessages(data scmServiceRequest) error {
     }
     switch data.Type {
     case "GOGETA_CLONE":
-        go GitShallowClone(data)
     case "GOGETA_NEW_BUILD":
-        go RunNewGitBuild(data)
+        go GitShallowClone(data)
+    //case "GOGETA_NEW_BUILD":
+        //go RunNewGitBuild(data)
     }
     return nil
 }
@@ -88,22 +89,22 @@ func GitShallowClone(data scmServiceRequest) {
             data.Buildcount,
         }
         CreateGitCredentials(repoPath)
-        go SaveRepo(*gitData)
+        //go SaveRepo(*gitData)
         go TriggerMrRobotBuild(*gitData)
     }
 }
 
 func RunNewGitBuild(data scmServiceRequest) {
-    gitData := FindRepo(data.Usr, data.Id)
-    gitData.BuildCount = gitData.BuildCount + 1
+    //gitData := FindRepo(data.Usr, data.Id)
+    //gitData.BuildCount = gitData.BuildCount + 1
     // put raw message in new build
-    SendRawMessage(
-        gitData.BuildrId,
-        gitData.BuildCount,
-        "new build started",
-        "new build started")
-    go TriggerMrRobotBuild(gitData)
-    go UpdateRepo(gitData)
+    //SendRawMessage(
+    //    gitData.BuildrId,
+    //    gitData.BuildCount,
+    //    "new build started",
+    //    "new build started")
+    //go TriggerMrRobotBuild(gitData)
+    //go UpdateRepo(gitData)
 }
 
 func UpdateGitRepositories() {
@@ -181,7 +182,7 @@ func GitPull(gitData GogetaRepo, repo *git.Repository) {
             "new code changes detected",
             "git merge origin master")
         BuildAfterMerge(err, msg, gitData)
-        go UpdateRepo(gitData)
+        //go UpdateRepo(gitData)
         break
     case FAST_FORWARD:
         err := MergeFastForward(repo, remoteBranchID)
@@ -193,7 +194,7 @@ func GitPull(gitData GogetaRepo, repo *git.Repository) {
             "new code changes detected",
             "git merge fast forward")
         BuildAfterMerge(err, msg, gitData)
-        go UpdateRepo(gitData)
+        //go UpdateRepo(gitData)
         break
     }
 }

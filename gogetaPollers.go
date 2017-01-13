@@ -29,7 +29,7 @@ type SQSMessage struct {
 func StartAppPoller() {
     logger.Info("Starting Message Poller")
     gocron.Every(1).Minute().Do(ScmCronJob)
-    gocron.Every(1).Minute().Do(UpdateGitRepositories)
+    //gocron.Every(1).Minute().Do(UpdateGitRepositories)
     gocron.Start()
 }
 

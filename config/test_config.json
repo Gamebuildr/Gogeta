@@ -1,3 +1,5 @@
 {
-    "test": "gamebuildr"
+    "test": "gamebuildr",
+    "AWSRegion": "eu/west",
+    "AmazonSQS": "amazon.sqs.endpoint"
 }

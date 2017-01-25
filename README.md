@@ -3,7 +3,7 @@ Gogeta is an open source source control micro service. It allows you to clone ne
 
 It currently supports Amazon SQS as its messaging queue service and git. There is future plans to extend the source control service support and currently nothing in the pipeline for adding more queue services.
 
-The service is tailored for use with [Gamebuildr](http://www.gambuildr.io) and we're always working on improving the solutions to make everything more generic.
+The service is tailored for use with [Gamebuildr](http://www.gamebuildr.io) and we're always working on improving the solutions to make everything more generic.
 
 ## Quick Install
 

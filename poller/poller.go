@@ -1,7 +1,6 @@
 package poller
 
 import "github.com/aws/aws-sdk-go/service/sqs"
-import "github.com/Gamebuildr/Gogeta/config"
 
 type ProcessFunc func(msg *sqs.Message) error
 
@@ -14,8 +13,8 @@ type Process interface {
 }
 
 func Start(process Process) {
-	region, _ := config.MainConfig.GetConfigKey("AWSRegion")
-	sqsURL, _ := config.MainConfig.GetConfigKey("AmazonSQS")
+	// region, _ := os.Getenv()
+	// sqsURL, _ := os.Getenv()
 
 	// amazonQueue := AmazonQueue{
 	// 	Client: sqs.New(session.New(), &aws.Config{Region: aws.String(region)}),

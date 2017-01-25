@@ -1,9 +1,0 @@
-// Config layout for gogeta config.json
-
-{
-"RepoPath":"chosen repo path - can be anywhere",
-"AWSRegion":"Amazon region - typically eu-west-1",
-"AmazonSQS":"Amazon SNS queue url - http://queue-url",
-"MrRobotSNSEndpoint":"Mr.Robot Amazon SNS arn",
-"GamebuildrSNSEndpoint":"Gamebuildr Amazon SNS arn"
-}

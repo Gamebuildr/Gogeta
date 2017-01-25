@@ -1,37 +1,32 @@
 package main
 
 import (
-    "net/http"
-    "os"
+	"net/http"
+	"os"
 
-    "github.com/Gamebuildr/Gogeta/config"
-    "github.com/Gamebuildr/Gogeta/logger"
+	"fmt"
+
+	"github.com/Gamebuildr/Gogeta/logger"
 )
 
 func main() {
-    setupConfig()
-    StartAppPoller()
-    startServer()
-}
-
-func setupConfig() {
-    config.SetConfigFile("./config.json")
-    config.CreateConfig()
+	StartAppPoller()
+	startServer()
 }
 
 func startServer() {
-    var port = getPort()
-    logger.Info("Gogeta Server Started")
-    err := http.ListenAndServe(port, nil)
-    if err != nil {
-        logger.Error(err.Error())
-    }
+	var port = getPort()
+	fmt.Printf("Gogeta Server Started")
+	err := http.ListenAndServe(port, nil)
+	if err != nil {
+		logger.Error(err.Error())
+	}
 }
 
 func getPort() string {
-    var port = os.Getenv("PORT")
-    if port == "" {
-        port = "9000"
-    }
-    return ":" + port
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "9000"
+	}
+	return ":" + port
 }

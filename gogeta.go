@@ -10,8 +10,9 @@ import (
 )
 
 func main() {
-	StartAppPoller()
-	startServer()
+
+	//StartAppPoller()
+	//startServer()
 }
 
 func startServer() {

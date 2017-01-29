@@ -5,7 +5,6 @@ import (
 
 	"os"
 
-	"github.com/Gamebuildr/Gogeta/logger"
 	"github.com/Gamebuildr/Gogeta/messages"
 )
 
@@ -23,7 +22,7 @@ func SendGamebuildrMessage(data GamebuildrMessage) {
 
 	jsonMsg, err := json.Marshal(data)
 	if err != nil {
-		logger.Error(err.Error())
+		// logger.Error(err.Error())
 		return
 	}
 	messages.PublishMessageToSns(string(jsonMsg), gamebuildrSNSEndpoint, awsRegion)
@@ -31,7 +30,7 @@ func SendGamebuildrMessage(data GamebuildrMessage) {
 
 func BuildAfterMerge(err error, msg string, data GogetaRepo) {
 	if err != nil {
-		logger.LogError(err, msg+data.Folder)
+		// logger.LogError(err, msg+data.Folder)
 		return
 	}
 	go TriggerMrRobotBuild(data)
@@ -42,7 +41,7 @@ func TriggerMrRobotBuild(data GogetaRepo) {
 	awsRegion := os.Getenv(QueueRegion)
 	jsonMsg, err := json.Marshal(data)
 	if err != nil {
-		logger.Error(err.Error())
+		// logger.Error(err.Error())
 		return
 	}
 	messages.PublishMessageToSns(string(jsonMsg), mrRobotSNSEndpoint, awsRegion)

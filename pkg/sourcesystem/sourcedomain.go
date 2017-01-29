@@ -1,7 +1,7 @@
 package sourcesystem
 
 type CodeRepository interface {
-	AddNewSource() SourceCode
+	AddSource() SourceCode
 }
 
 // SourceCode is the base entity for Gogetas
@@ -11,7 +11,10 @@ type SourceCode struct {
 	AccessLocation string
 }
 
-//func (src SourceCode) AddNewSource() {}
+//TODO: Potentially add the limit of repo size by
+// customer type here in the domain
+
+//func (src SourceCode) AddSource() {}
 
 //func (src SourceCode) UpdateSource() {}
 

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 
-	"github.com/Gamebuildr/Gogeta/logger"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/jasonlvhit/gocron"
 )
@@ -26,7 +25,7 @@ type SQSMessage struct {
 }
 
 func StartAppPoller() {
-	logger.Info("Starting Message Poller")
+	// logger.Info("Starting Message Poller")
 	gocron.Every(1).Minute().Do(ScmCronJob)
 	//gocron.Every(1).Minute().Do(UpdateGitRepositories)
 	gocron.Start()

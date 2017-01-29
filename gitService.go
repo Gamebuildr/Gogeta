@@ -6,7 +6,6 @@ import (
 
 	"os"
 
-	"github.com/Gamebuildr/Gogeta/logger"
 	uuid "github.com/satori/go.uuid"
 	git "gopkg.in/libgit2/git2go.v23"
 )
@@ -46,14 +45,14 @@ func GitShallowClone(data scmServiceRequest) {
 		"git clone started",
 		cloneMsgDev)
 
-	logfile := logger.GetLogFile()
-	defer logfile.Close()
+	// logfile := logger.GetLogFile()
+	// defer logfile.Close()
 
-	cmd.Stdout = logfile
-	cmd.Stderr = logfile
+	// cmd.Stdout = logfile
+	// cmd.Stderr = logfile
 
 	commandErr := cmd.Start()
-	logger.LogError(commandErr, "Git Clone")
+	// logger.LogError(commandErr, "Git Clone")
 	if commandErr != nil {
 		SendRawMessage(
 			data.Id,
@@ -63,7 +62,7 @@ func GitShallowClone(data scmServiceRequest) {
 	}
 
 	cloneErr := cmd.Wait()
-	logger.LogError(cloneErr, "Git Clone")
+	// logger.LogError(cloneErr, "Git Clone")
 	if cloneErr != nil {
 		SendRawMessage(
 			data.Id,
@@ -114,7 +113,7 @@ func UpdateGitRepositories() {
 		folder := repoPath + repos[i].Folder
 		repo, err := git.OpenRepository(folder)
 		if err != nil {
-			logger.Error(err.Error())
+			// logger.Error(err.Error())
 			continue
 		}
 		if repo.IsBare() {
@@ -135,19 +134,19 @@ func GetRepoPath(project string) (string, string) {
 func CreateGitCredentials(repo string) {
 	openRepo, err := git.OpenRepository(repo)
 	if err != nil {
-		logger.LogError(err, "Git Create Credentials")
+		// logger.LogError(err, "Git Create Credentials")
 	}
 	config, configErr := openRepo.Config()
 	if configErr != nil {
-		logger.LogError(configErr, "Git Config Set")
+		// logger.LogError(configErr, "Git Config Set")
 	}
 	configNameErr := config.SetString("user.name", "gamebuildr")
 	if configNameErr != nil {
-		logger.LogError(configNameErr, "Git Config Name")
+		// logger.LogError(configNameErr, "Git Config Name")
 	}
 	configEmailErr := config.SetString("user.email", "contact@gamebuildr.io")
 	if configEmailErr != nil {
-		logger.LogError(configEmailErr, "Git Config Email")
+		// logger.LogError(configEmailErr, "Git Config Email")
 	}
 }
 
@@ -158,7 +157,7 @@ func GitPull(gitData GogetaRepo, repo *git.Repository) {
 
 	analysis, err := AnalyzeLatestUpdates(repo, remoteBranch)
 	if err != nil {
-		logger.Error(err.Error())
+		// logger.Error(err.Error())
 	}
 	mergeType := CheckMergeAnalysis(analysis)
 	msg := "Git Merge " + mergeType
@@ -205,8 +204,8 @@ func SendRawMessage(dataId string, dataCount int, message string, devMessage str
 }
 
 func GetRemoteBranch(repo *git.Repository) *git.Reference {
-	remoteBranch, err := repo.References.Lookup("refs/remotes/origin/master")
-	logger.LogError(err, "Git Remote Branch")
+	remoteBranch, _ := repo.References.Lookup("refs/remotes/origin/master")
+	// logger.LogError(err, "Git Remote Branch")
 	return remoteBranch
 }
 
@@ -215,11 +214,11 @@ func FetchLatestsUpdates(data GogetaRepo) {
 	repoPath := os.Getenv(RepoPath)
 	cmd.Dir = repoPath + data.Folder
 
-	commandErr := cmd.Start()
-	logger.LogError(commandErr, "Git Fetch")
+	// _ := cmd.Start()
+	// logger.LogError(commandErr, "Git Fetch")
 
-	fetchErr := cmd.Wait()
-	logger.LogError(fetchErr, "Git Fetch")
+	// _ := cmd.Wait()
+	// logger.LogError(fetchErr, "Git Fetch")
 }
 
 func AnalyzeLatestUpdates(repo *git.Repository, remoteBranch *git.Reference) (git.MergeAnalysis, error) {
@@ -231,7 +230,7 @@ func AnalyzeLatestUpdates(repo *git.Repository, remoteBranch *git.Reference) (gi
 	mergeHeads := make([]*git.AnnotatedCommit, 1)
 	mergeHeads[0] = annotatedCommit
 	analysis, _, err := repo.MergeAnalysis(mergeHeads)
-	logger.LogError(err, "Git Merge Analysis")
+	// logger.LogError(err, "Git Merge Analysis")
 	return analysis, nil
 }
 

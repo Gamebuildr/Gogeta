@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 
-	"os"
-
 	"github.com/Gamebuildr/Gogeta/messages"
 )
 
@@ -17,8 +15,8 @@ type GamebuildrMessage struct {
 }
 
 func SendGamebuildrMessage(data GamebuildrMessage) {
-	gamebuildrSNSEndpoint := os.Getenv(GamebuildrNotifications)
-	awsRegion := os.Getenv(QueueRegion)
+	gamebuildrSNSEndpoint := "" //os.Getenv(GamebuildrNotifications)
+	awsRegion := ""             //os.Getenv(QueueRegion)
 
 	jsonMsg, err := json.Marshal(data)
 	if err != nil {
@@ -37,8 +35,8 @@ func BuildAfterMerge(err error, msg string, data GogetaRepo) {
 }
 
 func TriggerMrRobotBuild(data GogetaRepo) {
-	mrRobotSNSEndpoint := os.Getenv(MrrobotNotifications)
-	awsRegion := os.Getenv(QueueRegion)
+	mrRobotSNSEndpoint := "" // os.Getenv(MrrobotNotifications)
+	awsRegion := ""          //os.Getenv(QueueRegion)
 	jsonMsg, err := json.Marshal(data)
 	if err != nil {
 		// logger.Error(err.Error())

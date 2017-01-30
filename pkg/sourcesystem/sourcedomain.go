@@ -1,23 +1,21 @@
 package sourcesystem
 
-type CodeRepository interface {
-	AddSource() SourceCode
+// SourceSystem is the base interface for Gogetas
+// source control management system
+type SourceSystem interface {
+	AddSource(repo *SourceRepository)
+	UpdateSource(repo SourceRepository)
+	//MakeSourceAvailable()
+	//RemoveSource()
 }
 
-// SourceCode is the base entity for Gogetas
+// SourceRepository is the base entity for Gogetas
 // source control management system
-type SourceCode struct {
+type SourceRepository struct {
+	ProjectName    string
 	SourceOrigin   string
 	AccessLocation string
 }
 
 //TODO: Potentially add the limit of repo size by
 // customer type here in the domain
-
-//func (src SourceCode) AddSource() {}
-
-//func (src SourceCode) UpdateSource() {}
-
-//func (src SourceCode) MakeSourceAvailable() {}
-
-//func (src SourceCode) RemoveSource() {}

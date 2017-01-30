@@ -45,5 +45,5 @@ func ProcessSCMMessages(msg *sqs.Message) error {
 	messageData := []byte(sqsMessage.Message)
 	json.Unmarshal(messageData, &gitData)
 
-	return GitProcessSQSMessages(gitData)
+	return nil //GitProcessSQSMessages(gitData)
 }

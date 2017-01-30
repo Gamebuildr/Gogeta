@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Gamebuildr/Mr.Robot/logger"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -15,13 +14,13 @@ import (
 var s3bucket string
 
 func S3UploadFolder(path string, bucket string) {
-	logger.Info("S3 Upload Started " + path)
+	// logger.Info("S3 Upload Started " + path)
 	s3bucket = bucket
 	err := filepath.Walk(path, WalkFolder)
 	if err != nil {
 		// logger.Warning("Filepath Walker: " + err.Error())
 	}
-	logger.Info("S3 Upload Successful " + path)
+	// logger.Info("S3 Upload Successful " + path)
 }
 
 func WalkFolder(location string, f os.FileInfo, err error) error {

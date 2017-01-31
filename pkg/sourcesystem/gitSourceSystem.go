@@ -17,14 +17,16 @@ func (scm GitVersionControl) CloneSource(repo *SourceRepository, location string
 
 	cmdErr := cmd.Start()
 	if cmdErr != nil {
-		// TODO: need dev logs here
-		return nil
+		return cmdErr
 	}
 	cloneErr := cmd.Wait()
 	if cloneErr != nil {
 		return cloneErr
 	}
-	createGitCredentials(location)
+	credErr := createGitCredentials(location)
+	if credErr != nil {
+		return credErr
+	}
 	return nil
 }
 
@@ -34,21 +36,22 @@ func (scm GitVersionControl) PullSource() error {
 	return errors.New("Not Implemented Yet")
 }
 
-func createGitCredentials(repo string) {
+func createGitCredentials(repo string) error {
 	openRepo, err := git.OpenRepository(repo)
 	if err != nil {
-		// logger.LogError(err, "Git Create Credentials")
+		return err
 	}
 	config, configErr := openRepo.Config()
 	if configErr != nil {
-		// logger.LogError(configErr, "Git Config Set")
+		return configErr
 	}
 	configNameErr := config.SetString("user.name", "gamebuildr")
 	if configNameErr != nil {
-		// logger.LogError(configNameErr, "Git Config Name")
+		return configNameErr
 	}
 	configEmailErr := config.SetString("user.email", "contact@gamebuildr.io")
 	if configEmailErr != nil {
-		// logger.LogError(configEmailErr, "Git Config Email")
+		return configEmailErr
 	}
+	return nil
 }

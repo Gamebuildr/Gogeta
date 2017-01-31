@@ -3,8 +3,8 @@ package sourcesystem
 // SourceSystem is the base interface for Gogetas
 // source control management system
 type SourceSystem interface {
-	AddSource(repo *SourceRepository)
-	UpdateSource(repo SourceRepository)
+	AddSource(repo *SourceRepository) error
+	UpdateSource(repo SourceRepository) error
 	//MakeSourceAvailable()
 	//RemoveSource()
 }

@@ -26,30 +26,29 @@ type SystemSCM SourceControlManager
 
 // AddSource for SystemSCM will gather source code
 // and then save the files to the local filesystem
-func (scm SystemSCM) AddSource(repo *SourceRepository) {
+func (scm SystemSCM) AddSource(repo *SourceRepository) error {
 	location := createSourceFolder(repo.ProjectName)
 	err := scm.VersionControl.CloneSource(repo, location)
 	repo.AccessLocation = location
 	if err != nil {
-		// return user log error
+		return err
 	}
-	// return user log success
+	return nil
 }
 
 // UpdateSource for SystemSCM will find the source
 // code location on the file system and update it
-func (scm SystemSCM) UpdateSource(repo SourceRepository) {
+func (scm SystemSCM) UpdateSource(repo SourceRepository) error {
 	err := scm.VersionControl.PullSource()
 	if err != nil {
-		// return user log error
+		return err
 	}
-	// return user log success
+	return nil
 }
 
 func createSourceFolder(project string) string {
 	uuid := uuid.NewV4()
 	folderName := project + "_" + uuid.String()
 	repoPath := os.Getenv(config.RepoPath)
-	//TODO: Save reference to folder name.
 	return repoPath + folderName
 }

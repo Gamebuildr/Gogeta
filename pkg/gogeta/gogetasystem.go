@@ -5,8 +5,9 @@ import (
 	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/logger"
 )
 
-// GogetaSystem
-type GogetaSystem struct {
+// SourceControlSystem is the base use case for constructing
+// the necessary systems to run Gogeta
+type SourceControlSystem struct {
 	SourceSystem sourcesystem.SourceSystem
 	Log          logger.Log
 }

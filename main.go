@@ -4,10 +4,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Gamebuildr/Gogeta/examples"
+
 	"fmt"
 )
 
 func main() {
+	examples.CompressAndUploadExample()
 	//StartAppPoller()
 	//startServer()
 }

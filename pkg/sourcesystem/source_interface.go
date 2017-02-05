@@ -2,6 +2,7 @@ package sourcesystem
 
 import (
 	"os"
+	"path"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -47,6 +48,6 @@ func (scm SystemSCM) UpdateSource(repo *SourceRepository) error {
 
 func createSourceFolder(project string) string {
 	uuid := uuid.NewV4()
-	folderName := "/repos/" + project + "_" + uuid.String()
-	return os.Getenv("GOPATH") + folderName
+	sourceFolder := path.Join(os.Getenv("GOPATH"), "/repos/", project+"_"+uuid.String())
+	return sourceFolder
 }

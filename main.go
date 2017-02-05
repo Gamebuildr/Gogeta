@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/Gamebuildr/Gogeta/client"
 	"github.com/Gamebuildr/Gogeta/pkg/config"
@@ -34,7 +35,7 @@ func runQueuePoll(gogeta *client.GogetaClient) {
 	repo := gogeta.GetSourceCode()
 
 	if repo.SourceLocation != "" {
-		archive := os.Getenv("GOPATH") + "/repos/" + repo.ProjectName + ".zip"
+		archive := path.Join(os.Getenv("GOPATH"), "/repos/", repo.ProjectName+".zip")
 
 		storageData := storehouse.StorageData{
 			Source: repo.SourceLocation,

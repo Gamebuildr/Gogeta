@@ -16,7 +16,7 @@ func (scm MockVersionControl) PullSource() error {
 
 func (scm MockSCM) AddSource(repo *SourceRepository) {
 	location := "/mock/path"
-	repo.AccessLocation = location
+	repo.SourceLocation = location
 }
 
 func (scm MockSCM) UpdateSource(repo SourceRepository) {
@@ -35,8 +35,8 @@ func TestAddSourceModifiesRepositoryValues(t *testing.T) {
 	repo := mockSourceRepository()
 	scm.AddSource(&repo)
 
-	if repo.AccessLocation != "/mock/path" {
-		t.Errorf("Expected: %v, got: %v", "/mock/path", repo.AccessLocation)
+	if repo.SourceLocation != "/mock/path" {
+		t.Errorf("Expected: %v, got: %v", "/mock/path", repo.SourceLocation)
 	}
 }
 
@@ -46,7 +46,7 @@ func TestSystemSCMUpdatesSourceRepositoryLocation(t *testing.T) {
 	repo := mockSourceRepository()
 	scm.AddSource(&repo)
 
-	if repo.AccessLocation == "" {
-		t.Errorf("Expected AccessLocation to be not empty")
+	if repo.SourceLocation == "" {
+		t.Errorf("Expected SourceLocation to be not empty")
 	}
 }

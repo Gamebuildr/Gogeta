@@ -1,4 +1,4 @@
-package main
+package database
 
 type GogetaRepo struct {
 	BuildrId   string

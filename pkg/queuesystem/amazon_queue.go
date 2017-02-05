@@ -1,4 +1,4 @@
-package queueSystem
+package queuesystem
 
 import (
 	"encoding/json"
@@ -10,13 +10,17 @@ import (
 
 // AmazonQueue provides the ability to
 // handle Amazon's SQS messages
+// Region: local region for queue
+// URL: messaging system uri endPoint
 type AmazonQueue struct {
 	Client sqsiface.SQSAPI
 	Region string
 	URL    string
 }
 
-func (queue AmazonQueue) getQueueMessages() ([]QueueMessage, error) {
+// GetQueueMessages gets one message from the specified
+// Amazon SNS queue
+func (queue AmazonQueue) GetQueueMessages() ([]QueueMessage, error) {
 	params := sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(queue.URL),
 		MaxNumberOfMessages: aws.Int64(1),
@@ -42,7 +46,9 @@ func (queue AmazonQueue) getQueueMessages() ([]QueueMessage, error) {
 	return messages, nil
 }
 
-func (queue AmazonQueue) deleteMessageFromQueue(receipt string) error {
+// DeleteMessageFromQueue deletes one message from the specified
+// Amazon SNS queue
+func (queue AmazonQueue) DeleteMessageFromQueue(receipt string) error {
 	deleteMsg := &sqs.DeleteMessageInput{
 		QueueUrl:      aws.String(queue.URL),
 		ReceiptHandle: aws.String(receipt),

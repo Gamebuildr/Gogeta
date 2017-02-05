@@ -3,7 +3,6 @@ package sourcesystem
 import (
 	"os"
 
-	"github.com/Gamebuildr/Gogeta/pkg/config"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -29,7 +28,7 @@ type SystemSCM SourceControlManager
 func (scm SystemSCM) AddSource(repo *SourceRepository) error {
 	location := createSourceFolder(repo.ProjectName)
 	err := scm.VersionControl.CloneSource(repo, location)
-	repo.AccessLocation = location
+	repo.SourceLocation = location
 	if err != nil {
 		return err
 	}
@@ -38,7 +37,7 @@ func (scm SystemSCM) AddSource(repo *SourceRepository) error {
 
 // UpdateSource for SystemSCM will find the source
 // code location on the file system and update it
-func (scm SystemSCM) UpdateSource(repo SourceRepository) error {
+func (scm SystemSCM) UpdateSource(repo *SourceRepository) error {
 	err := scm.VersionControl.PullSource()
 	if err != nil {
 		return err
@@ -48,7 +47,6 @@ func (scm SystemSCM) UpdateSource(repo SourceRepository) error {
 
 func createSourceFolder(project string) string {
 	uuid := uuid.NewV4()
-	folderName := project + "_" + uuid.String()
-	repoPath := os.Getenv(config.RepoPath)
-	return repoPath + folderName
+	folderName := "/repos/" + project + "_" + uuid.String()
+	return os.Getenv("GOPATH") + folderName
 }

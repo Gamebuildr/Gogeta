@@ -32,20 +32,19 @@ func SourceControlExample() {
 // system that allows you to manipulate files and upload them
 func CompressAndUploadExample() {
 	// StorageData will save data operations made
-	data := new(storehouse.StorageData)
+	data := storehouse.StorageData{
+		Source: "./Gogeta_Test",
+		Target: "/home/boomer/Documents/TestArchive.zip",
+	}
 
 	// Create a new storehouse object
 	compressedStorage := new(storehouse.Compressed)
 
 	// Specify the compression format
-	zipCompress := storehouse.Zip{
-		Source: "./Gogeta_Test",
-		Target: "/home/boomer/Documents/TestArchive.zip",
-	}
+	zipCompress := storehouse.Zip{}
 
 	// Specify the upload format
 	cloudStorage := storehouse.GoogleCloud{
-		FileName:   "Gogeta_Test.zip",
 		BucketName: os.Getenv(config.CodeRepoStorage),
 	}
 
@@ -54,7 +53,7 @@ func CompressAndUploadExample() {
 	compressedStorage.StorageSystem = cloudStorage
 
 	// Store files on the specified medium
-	err := compressedStorage.StoreFiles(data)
+	err := compressedStorage.StoreFiles(&data)
 	if err != nil {
 		fmt.Printf(err.Error())
 	}

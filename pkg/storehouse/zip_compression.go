@@ -10,18 +10,14 @@ import (
 
 // Zip compression will take a file or
 // directory and create a zip archive
-type Zip struct {
-	Source string
-	Target string
-}
+type Zip struct{}
 
 // Encode data to a zip archive
 func (compress Zip) Encode(data *StorageData) error {
-	err := compress.zipArchive(compress.Source, compress.Target)
+	err := compress.zipArchive(data.Source, data.Target)
 	if err != nil {
 		return err
 	}
-	data.Location = compress.Target
 	return nil
 }
 

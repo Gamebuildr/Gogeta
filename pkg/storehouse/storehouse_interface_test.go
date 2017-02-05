@@ -17,7 +17,7 @@ func (mock *MockStorage) Upload(data *StorageData) error {
 }
 
 func (mock *MockCompression) Encode(data *StorageData) error {
-	data.Location = mock.MockLocation
+	data.Source = mock.MockLocation
 	mock.EncodeCalled = true
 	return nil
 }
@@ -36,8 +36,8 @@ func TestCompressedStorehouseImplementsInterface(t *testing.T) {
 
 	compressStoreHouse.StoreFiles(mockData)
 
-	if mockData.Location != mockCompression.MockLocation {
-		t.Errorf("Expected: %v, got: %v", mockCompression.MockLocation, mockData.Location)
+	if mockData.Source != mockCompression.MockLocation {
+		t.Errorf("Expected: %v, got: %v", mockCompression.MockLocation, mockData.Source)
 	}
 	if !mockCompression.EncodeCalled {
 		t.Errorf("Expected: %v", "Encode to be called")

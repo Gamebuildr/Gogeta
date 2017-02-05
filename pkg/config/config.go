@@ -21,3 +21,6 @@ const GamebuildrNotifications = "GAMEBUILDR_NOTIFICATIONS"
 
 // CodeRepoStorage is the location to save source code
 const CodeRepoStorage = "CODE_REPO_STORAGE"
+
+// GoEnv is the environment the current system is operating in
+const GoEnv = "GO_ENV"

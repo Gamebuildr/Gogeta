@@ -1,4 +1,4 @@
-package queueSystem
+package queuesystem
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ func (m MockedAmazonClient) DeleteMessage(input *sqs.DeleteMessageInput) (*sqs.D
 }
 
 func TestGetQueueMessages(t *testing.T) {
-	messageReceipt := "testReceipt"
+	messageReceipt := "mockReceipts"
 	mockMessages := []struct {
 		Resp     sqs.ReceiveMessageOutput
 		Expected []QueueMessage
@@ -35,13 +35,20 @@ func TestGetQueueMessages(t *testing.T) {
 			Resp: sqs.ReceiveMessageOutput{
 				Messages: []*sqs.Message{
 					{
-						Body:          aws.String(`{"from":"user","to":"app","data":"Output"}`),
+						Body:          aws.String(`{"id":"1234","usr":"test","repo":"repo.mock.url","proj":"mock","type":"git"}`),
 						ReceiptHandle: &messageReceipt,
 					},
 				},
 			},
 			Expected: []QueueMessage{
-				{From: "user", To: "app", Data: "Output", MessageReceipt: "testReceipt"},
+				{
+					ID:             "1234",
+					Usr:            "test",
+					Repo:           "repo.mock.url",
+					Proj:           "mock",
+					MessageReceipt: "mockReceipts",
+					Type:           "git",
+				},
 			},
 		},
 	}
@@ -51,7 +58,7 @@ func TestGetQueueMessages(t *testing.T) {
 			Client: MockedAmazonClient{Response: c.Resp},
 			URL:    fmt.Sprintf("mockUrl_%d", i),
 		}
-		messages, err := queue.getQueueMessages()
+		messages, err := queue.GetQueueMessages()
 
 		if err != nil {
 			t.Fatalf("%d, amazon test error, %v", i, err)
@@ -68,7 +75,7 @@ func TestGetQueueMessages(t *testing.T) {
 }
 
 func TestDeleteMessageFromQueue(t *testing.T) {
-	messageReceipt := "testReceipt"
+	messageReceipt := "mockReceipts"
 	deleteMock := []struct {
 		Resp      sqs.ReceiveMessageOutput
 		DeleteRsp sqs.DeleteMessageOutput
@@ -78,7 +85,7 @@ func TestDeleteMessageFromQueue(t *testing.T) {
 			Resp: sqs.ReceiveMessageOutput{
 				Messages: []*sqs.Message{
 					{
-						Body:          aws.String(`{"from":"user","to":"app","data":"Output"}`),
+						Body:          aws.String(`{"id":"1234","usr":"test","repo":"repo.mock.url","proj":"mock","type":"git"}`),
 						ReceiptHandle: &messageReceipt,
 					},
 				},
@@ -96,8 +103,8 @@ func TestDeleteMessageFromQueue(t *testing.T) {
 			},
 			URL: fmt.Sprintf("mockUrl_%d", i),
 		}
-		messages, _ := queue.getQueueMessages()
-		err := queue.deleteMessageFromQueue(messages[0].MessageReceipt)
+		messages, _ := queue.GetQueueMessages()
+		err := queue.DeleteMessageFromQueue(messages[0].MessageReceipt)
 		if err != nil {
 			t.Fatalf("%d, amazon test error, %v", i, err)
 		}

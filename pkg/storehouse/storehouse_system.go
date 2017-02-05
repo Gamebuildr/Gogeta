@@ -9,6 +9,9 @@ type StoreHouse interface {
 
 // StorageData is the data used inside the storehouse
 // when running operations on data
+// Source is the local location of the source data
+// Target is the target archive file location and name
 type StorageData struct {
-	Location string
+	Source string
+	Target string
 }

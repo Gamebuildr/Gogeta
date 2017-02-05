@@ -3,6 +3,7 @@ package storehouse
 import (
 	"io"
 	"os"
+	"path/filepath"
 
 	"cloud.google.com/go/storage"
 	"golang.org/x/net/context"
@@ -11,7 +12,6 @@ import (
 // GoogleCloud is the implementation of Google's cloud
 // storage system that uploads data to bucket locations
 type GoogleCloud struct {
-	FileName   string
 	BucketName string
 }
 
@@ -24,14 +24,16 @@ func (cloud GoogleCloud) Upload(data *StorageData) error {
 		return err
 	}
 
-	file, err := os.Open(data.Location)
+	file, err := os.Open(data.Target)
 	if err != nil {
 		return err
 	}
 
 	defer file.Close()
 
-	writer := client.Bucket(cloud.BucketName).Object(cloud.FileName).NewWriter(ctx)
+	fileName := filepath.Base(data.Target)
+
+	writer := client.Bucket(cloud.BucketName).Object(fileName).NewWriter(ctx)
 
 	if _, err = io.Copy(writer, file); err != nil {
 		return err

@@ -7,6 +7,7 @@ import (
 	"github.com/Gamebuildr/Gogeta/pkg/queuesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
+	"github.com/Gamebuildr/gamebuildr-compressor/pkg/compressor"
 	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/logger"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -33,7 +34,7 @@ func (client *GogetaClient) InitializeClient() {
 	log.LogSave = saveSystem
 
 	store := &storehouse.Compressed{}
-	zipCompress := &storehouse.Zip{}
+	zipCompress := &compressor.Zip{}
 	cloudStorage := &storehouse.GoogleCloud{
 		BucketName: os.Getenv(config.CodeRepoStorage),
 	}

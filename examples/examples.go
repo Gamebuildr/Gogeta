@@ -7,6 +7,7 @@ import (
 	"github.com/Gamebuildr/Gogeta/pkg/config"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
+	"github.com/Gamebuildr/gamebuildr-compressor/pkg/compressor"
 )
 
 // SourceControlExample shows how to implement the source system
@@ -41,7 +42,7 @@ func CompressAndUploadExample() {
 	compressedStorage := new(storehouse.Compressed)
 
 	// Specify the compression format
-	zipCompress := storehouse.Zip{}
+	zipCompress := compressor.Zip{}
 
 	// Specify the upload format
 	cloudStorage := storehouse.GoogleCloud{

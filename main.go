@@ -15,18 +15,18 @@ import (
 )
 
 func main() {
-	gogeta := client.GogetaClient{}
-	gogeta.InitializeClient()
+	appClient := client.GogetaClient{}
+	appClient.Start()
 
 	if os.Getenv(config.GoEnv) == "development" {
 		mockdata := `{"id":"123456","usr":"Boomer","repo":"https://github.com/Gamebuildr/Gogeta.git","proj":"Gogeta","type":"git"}`
 		mockMessages := testutils.StubbedQueueMessage(mockdata)
-		gogeta.Queue = queuesystem.AmazonQueue{
+		appClient.Queue = queuesystem.AmazonQueue{
 			Client: testutils.MockedAmazonClient{Response: mockMessages.Resp},
 			URL:    "mockUrl_%d",
 		}
 	}
-	runQueuePoll(&gogeta)
+	runQueuePoll(&appClient)
 	//gocron.Every(1).Minute().Do(runQueuePoll)
 	//startServer()
 }

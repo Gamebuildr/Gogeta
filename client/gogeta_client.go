@@ -22,8 +22,8 @@ type GogetaClient struct {
 	Storage storehouse.StoreHouse
 }
 
-// InitializeClient creates a new gogeta client
-func (client *GogetaClient) InitializeClient() {
+// Start creates a new gogeta client
+func (client *GogetaClient) Start() {
 	sess := session.Must(session.NewSession())
 
 	scm := &sourcesystem.SystemSCM{}
@@ -43,7 +43,7 @@ func (client *GogetaClient) InitializeClient() {
 
 	client.Queue = queuesystem.AmazonQueue{
 		Client: sqs.New(sess),
-		Region: os.Getenv(config.QueueRegion),
+		Region: os.Getenv(config.Region),
 		URL:    os.Getenv(config.QueueURL),
 	}
 	client.Log = log
@@ -57,7 +57,7 @@ func (client *GogetaClient) GetSourceCode() *sourcesystem.SourceRepository {
 	repo := sourcesystem.SourceRepository{}
 	messages, err := client.Queue.GetQueueMessages()
 	if err != nil {
-		client.logError(err.Error())
+		client.Log.Error(err.Error())
 	}
 
 	if len(messages) <= 0 {
@@ -73,15 +73,7 @@ func (client *GogetaClient) GetSourceCode() *sourcesystem.SourceRepository {
 	repo.ProjectName = project
 	repo.SourceOrigin = origin
 	if err := client.SCM.AddSource(&repo); err != nil {
-		client.logError(err.Error())
+		client.Log.Error(err.Error())
 	}
 	return &repo
-}
-
-func (client *GogetaClient) logError(message string) {
-	client.Log.Error(message)
-}
-
-func (client *GogetaClient) logInfo(message string) {
-	client.Log.Info(message)
 }

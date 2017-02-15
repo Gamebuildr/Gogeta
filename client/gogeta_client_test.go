@@ -49,7 +49,7 @@ func TestGogetaClientLogsInfo(t *testing.T) {
 	mockLog := &MockLogger{}
 
 	client.Log = mockLog
-	client.logInfo(info)
+	client.Log.Info(info)
 
 	if info != mockLog.TestData {
 		t.Errorf("Expected: %v, got: %v", info, mockLog.TestData)
@@ -62,7 +62,7 @@ func TestGogetaClientLogsErrors(t *testing.T) {
 	mockLog := &MockLogger{}
 
 	client.Log = mockLog
-	client.logError(err)
+	client.Log.Error(err)
 
 	if err != mockLog.TestData {
 		t.Errorf("Expected: %v, got: %v", err, mockLog.TestData)

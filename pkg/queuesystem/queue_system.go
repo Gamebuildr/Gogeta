@@ -10,10 +10,14 @@ type Messages interface {
 // QueueMessage is the abstraction for formatting
 // and using data that comes from the queues
 type QueueMessage struct {
-	ID             string `json:"id"`
-	Usr            string `json:"usr"`
+	ArchivePath    string `json:"archivepath"`
+	Project        string `json:"project"`
+	EngineName     string `json:"enginename"`
+	EnginePlatform string `json:"engineplatform"`
+	EngineVersion  string `json:"engineversion"`
+	BuildrID       string `json:"buildrid"`
+	BuildID        string `json:"buildid"`
 	Repo           string `json:"repo"`
-	Proj           string `json:"proj"`
 	Type           string `json:"type"`
 	MessageReceipt string
 }

@@ -27,6 +27,14 @@ func (m MockedAmazonClient) DeleteMessage(input *sqs.DeleteMessageInput) (*sqs.D
 
 func TestGetQueueMessages(t *testing.T) {
 	messageReceipt := "mockReceipts"
+	mockdata := `{"project":"Gogeta",
+		"enginename":"mockengine",
+		"engineplatform":"windows",
+		"engineversion":"5.2.3f1",
+		"buildrid":"1234",
+		"buildid":"1",
+		"repo":"repo.mock.url",
+		"type":"mockscm"}`
 	mockMessages := []struct {
 		Resp     sqs.ReceiveMessageOutput
 		Expected []QueueMessage
@@ -35,19 +43,22 @@ func TestGetQueueMessages(t *testing.T) {
 			Resp: sqs.ReceiveMessageOutput{
 				Messages: []*sqs.Message{
 					{
-						Body:          aws.String(`{"id":"1234","usr":"test","repo":"repo.mock.url","proj":"mock","type":"git"}`),
+						Body:          aws.String(mockdata),
 						ReceiptHandle: &messageReceipt,
 					},
 				},
 			},
 			Expected: []QueueMessage{
 				{
-					ID:             "1234",
-					Usr:            "test",
+					Project:        "Gogeta",
+					EngineName:     "mockengine",
+					EnginePlatform: "windows",
+					EngineVersion:  "5.2.3f1",
+					BuildrID:       "1234",
+					BuildID:        "1",
 					Repo:           "repo.mock.url",
-					Proj:           "mock",
+					Type:           "mockscm",
 					MessageReceipt: "mockReceipts",
-					Type:           "git",
 				},
 			},
 		},
@@ -76,6 +87,14 @@ func TestGetQueueMessages(t *testing.T) {
 
 func TestDeleteMessageFromQueue(t *testing.T) {
 	messageReceipt := "mockReceipts"
+	mockdata := `{"project":"Gogeta",
+		"enginename":"mockengine",
+		"engineplatform":"windows",
+		"engineversion":"5.2.3f1",
+		"buildrid":"1234",
+		"buildid":"1",
+		"repo":"repo.mock.url",
+		"type":"mockscm"}`
 	deleteMock := []struct {
 		Resp      sqs.ReceiveMessageOutput
 		DeleteRsp sqs.DeleteMessageOutput
@@ -85,7 +104,7 @@ func TestDeleteMessageFromQueue(t *testing.T) {
 			Resp: sqs.ReceiveMessageOutput{
 				Messages: []*sqs.Message{
 					{
-						Body:          aws.String(`{"id":"1234","usr":"test","repo":"repo.mock.url","proj":"mock","type":"git"}`),
+						Body:          aws.String(mockdata),
 						ReceiptHandle: &messageReceipt,
 					},
 				},

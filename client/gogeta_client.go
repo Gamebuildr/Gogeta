@@ -1,9 +1,13 @@
 package client
 
 import (
+	"encoding/json"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
+	"github.com/Gamebuildr/Gogeta/pkg/publisher"
 	"github.com/Gamebuildr/Gogeta/pkg/queuesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
@@ -13,26 +17,40 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
-// GogetaClient is the high level implementation of the gogeta
-// source control system
-type GogetaClient struct {
-	Queue   queuesystem.Messages
-	Log     logger.Log
-	SCM     sourcesystem.SourceSystem
-	Storage storehouse.StoreHouse
+// Gogeta is the source control manager implementation
+type Gogeta struct {
+	Queue         queuesystem.Messages
+	Log           logger.Log
+	SCM           sourcesystem.SourceSystem
+	Storage       storehouse.StoreHouse
+	Notifications publisher.Notifications
+	data          []queuesystem.QueueMessage
 }
 
-// Start creates a new gogeta client
-func (client *GogetaClient) Start() {
-	sess := session.Must(session.NewSession())
+// MrRobotMessage is the data needed to send to MrRobot
+type MrRobotMessage struct {
+	ArchivePath    string `json:"archivepath"`
+	Project        string `json:"project"`
+	EngineName     string `json:"enginename"`
+	EnginePlatform string `json:"engineplatform"`
+	EngineVersion  string `json:"engineversion"`
+	BuildrID       string `json:"buildrid"`
+	BuildID        string `json:"buildid"`
+}
 
-	scm := &sourcesystem.SystemSCM{}
-	scm.VersionControl = &sourcesystem.GitVersionControl{}
+const logFileName string = "gogeta_client_"
 
+// Supported SCM types
+const git string = "GIT"
+
+// Start initializes a new gogeta client
+func (client *Gogeta) Start() {
+	// logging system
 	log := logger.SystemLogger{}
-	saveSystem := logger.FileLogSave{LogFileName: "gogeta_client_"}
+	saveSystem := logger.FileLogSave{LogFileName: logFileName}
 	log.LogSave = saveSystem
 
+	// storage system
 	store := &storehouse.Compressed{}
 	zipCompress := &compressor.Zip{}
 	cloudStorage := &storehouse.GoogleCloud{
@@ -41,39 +59,122 @@ func (client *GogetaClient) Start() {
 	store.Compression = zipCompress
 	store.StorageSystem = cloudStorage
 
-	client.Queue = queuesystem.AmazonQueue{
+	// queue system
+	sess := session.Must(session.NewSession())
+	amazonQueue := queuesystem.AmazonQueue{
 		Client: sqs.New(sess),
-		Region: os.Getenv(config.Region),
 		URL:    os.Getenv(config.QueueURL),
 	}
+
+	// publisher system
+	amazonSNS := publisher.AmazonNotification{}
+	amazonSNS.Setup()
+	notifications := publisher.SimpleNotification{
+		Application: &amazonSNS,
+		Log:         log,
+	}
+
+	// Setup client
 	client.Log = log
-	client.SCM = scm
 	client.Storage = store
+	client.Queue = amazonQueue
+	client.Notifications = &notifications
 }
 
-// GetSourceCode requests messages from the queues and gathers source code
-// if the messages are not empty
-func (client *GogetaClient) GetSourceCode() *sourcesystem.SourceRepository {
+// RunGogetaClient will run the complete gogeta scm system
+func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	repo := sourcesystem.SourceRepository{}
+	client.queueMessages()
+	if len(client.data) <= 0 {
+		return &repo
+	}
+
+	client.setVersionControl()
+	if client.SCM == nil {
+		return &repo
+	}
+
+	client.downloadSource(&repo)
+	if repo.SourceLocation == "" {
+		return &repo
+	}
+	client.archiveRepo(&repo)
+	client.notifyMrRobot(&repo)
+	return &repo
+}
+
+func (client *Gogeta) queueMessages() {
 	messages, err := client.Queue.GetQueueMessages()
 	if err != nil {
 		client.Log.Error(err.Error())
 	}
+	client.data = messages
+}
 
-	if len(messages) <= 0 {
-		return &repo
+func (client *Gogeta) setVersionControl() {
+	dataType := strings.ToUpper(client.data[0].Type)
+	switch dataType {
+	case git:
+		scm := &sourcesystem.SystemSCM{}
+		scm.VersionControl = &sourcesystem.GitVersionControl{}
+		client.SCM = scm
+		return
+	default:
+		client.Log.Info("SCM Type not found: " + dataType)
+		return
 	}
+}
 
-	project := messages[0].Proj
-	origin := messages[0].Repo
+func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
+	message := client.data[0]
+	project := message.Project
+	origin := message.Repo
+
 	if project == "" || origin == "" {
-		return &repo
+		return
 	}
 
 	repo.ProjectName = project
 	repo.SourceOrigin = origin
-	if err := client.SCM.AddSource(&repo); err != nil {
+
+	if err := client.SCM.AddSource(repo); err != nil {
 		client.Log.Error(err.Error())
 	}
-	return &repo
+}
+
+func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
+	fileName := repo.ProjectName + ".zip"
+	archive := path.Join(os.Getenv("GOPATH"), "/repos/", fileName)
+	storageData := storehouse.StorageData{
+		Source: repo.SourceLocation,
+		Target: archive,
+	}
+	if err := client.Storage.StoreFiles(&storageData); err != nil {
+		client.Log.Error(err.Error())
+	}
+	client.data[0].ArchivePath = fileName
+}
+
+func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) {
+	data := client.data[0]
+	message := MrRobotMessage{
+		ArchivePath:    data.ArchivePath,
+		Project:        data.Project,
+		EngineName:     data.EngineName,
+		EnginePlatform: data.EnginePlatform,
+		EngineVersion:  data.EngineVersion,
+		BuildrID:       data.BuildrID,
+		BuildID:        data.BuildID,
+	}
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		client.Log.Error(err.Error())
+		return
+	}
+	notification := publisher.Message{
+		JSON:     jsonMessage,
+		Subject:  "Buildr Request",
+		Endpoint: os.Getenv(config.MrrobotNotifications),
+	}
+	client.Notifications.SendJSON(&notification)
 }

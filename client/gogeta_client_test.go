@@ -3,10 +3,31 @@ package client
 import (
 	"testing"
 
+	"github.com/Gamebuildr/Gogeta/pkg/publisher"
 	"github.com/Gamebuildr/Gogeta/pkg/queuesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
+	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
 	"github.com/Gamebuildr/Gogeta/pkg/testutils"
 )
+
+type MockPubSubApp struct{ Data string }
+
+func (app *MockPubSubApp) PublishMessage(msg publisher.Message) (string, error) {
+	app.Data = msg.Message
+	return msg.Message, nil
+}
+
+type MockStorage struct{}
+
+type MockCompression struct{}
+
+func (mock *MockStorage) Upload(data *storehouse.StorageData) error {
+	return nil
+}
+
+func (mock *MockCompression) Encode(source string, target string) error {
+	return nil
+}
 
 // MockLogger mocks out the logging system
 // specified in the gogeta client
@@ -43,7 +64,7 @@ func (scm *MockSCM) UpdateSource(repo *sourcesystem.SourceRepository) error {
 
 // Main gogeta client tests
 func TestGogetaClientLogsInfo(t *testing.T) {
-	client := &GogetaClient{}
+	client := &Gogeta{}
 	info := "mockinfo"
 
 	mockLog := &MockLogger{}
@@ -57,7 +78,7 @@ func TestGogetaClientLogsInfo(t *testing.T) {
 }
 
 func TestGogetaClientLogsErrors(t *testing.T) {
-	client := &GogetaClient{}
+	client := &Gogeta{}
 	err := "mockerr"
 	mockLog := &MockLogger{}
 
@@ -71,21 +92,38 @@ func TestGogetaClientLogsErrors(t *testing.T) {
 
 func TestGogetaClientClonesRepoIfMessageExists(t *testing.T) {
 	mockPath := "/mock/repo/location"
-	mockdata := `{"id":"1234","usr":"test","repo":"repo.mock.url","proj":"mock","type":"git"}`
+	mockdata := `{"project":"Gogeta",
+		"enginename":"mockengine",
+		"engineplatform":"windows",
+		"engineversion":"5.2.3f1",
+		"buildrid":"1234",
+		"buildid":"1",
+		"repo":"repo.mock.url",
+		"type":"mockscm"}`
 	mockMessages := testutils.StubbedQueueMessage(mockdata)
-	client := &GogetaClient{}
+	client := &Gogeta{}
 	mockLog := &MockLogger{}
 	mockSCM := &MockSCM{}
+	application := MockPubSubApp{}
+	mockNotify := publisher.SimpleNotification{Application: &application}
+	mockstore := new(storehouse.Compressed)
+	mockCompression := MockCompression{}
+	mockStorage := MockStorage{}
+
+	mockstore.Compression = &mockCompression
+	mockstore.StorageSystem = &mockStorage
 
 	client.Log = mockLog
 	client.SCM = mockSCM
+	client.Storage = mockstore
+	client.Notifications = &mockNotify
 
 	client.Queue = queuesystem.AmazonQueue{
 		Client: testutils.MockedAmazonClient{Response: mockMessages.Resp},
 		URL:    "mockUrl_%d",
 	}
 
-	repo := client.GetSourceCode()
+	repo := client.RunGogetaClient()
 
 	if repo.SourceLocation != mockPath {
 		t.Errorf("Expected: %v, got: %v", mockPath, repo.SourceLocation)
@@ -99,15 +137,15 @@ func TestGogetaClientClonesRepoIfMessageExists(t *testing.T) {
 	if repo.ProjectName == "" {
 		t.Errorf("Expected: %v, got: ProjectName should not be empty", "mock")
 	}
-	if repo.ProjectName != "mock" {
-		t.Errorf("Expected: %v, got: %v", "mock", repo.ProjectName)
+	if repo.ProjectName != "Gogeta" {
+		t.Errorf("Expected: %v, got: %v", "Gogeta", repo.ProjectName)
 	}
 }
 
 func TestGogetaClientReturnsNilIfMessagesAreEmpty(t *testing.T) {
 	mockdata := `{}`
 	mockMessages := testutils.StubbedQueueMessage(mockdata)
-	client := &GogetaClient{}
+	client := &Gogeta{}
 	mockLog := &MockLogger{}
 	mockSCM := &MockSCM{}
 
@@ -119,7 +157,7 @@ func TestGogetaClientReturnsNilIfMessagesAreEmpty(t *testing.T) {
 		URL:    "mockUrl_%d",
 	}
 
-	repo := client.GetSourceCode()
+	repo := client.RunGogetaClient()
 
 	if repo.SourceLocation != "" {
 		t.Errorf("Expected SourceLocation to be empty, got %v", repo.SourceLocation)

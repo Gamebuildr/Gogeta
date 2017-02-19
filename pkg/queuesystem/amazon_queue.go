@@ -14,7 +14,6 @@ import (
 // URL: messaging system uri endPoint
 type AmazonQueue struct {
 	Client sqsiface.SQSAPI
-	Region string
 	URL    string
 }
 

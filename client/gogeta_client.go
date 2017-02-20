@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
@@ -47,7 +49,10 @@ const git string = "GIT"
 func (client *Gogeta) Start() {
 	// logging system
 	log := logger.SystemLogger{}
-	saveSystem := logger.FileLogSave{LogFileName: logFileName}
+	saveSystem := logger.FileLogSave{
+		LogFileName: logFileName,
+		LogFileDir:  client.defaultDirectory(),
+	}
 	log.LogSave = saveSystem
 
 	// storage system
@@ -98,8 +103,8 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	if repo.SourceLocation == "" {
 		return &repo
 	}
-	client.archiveRepo(&repo)
-	client.notifyMrRobot(&repo)
+	//client.archiveRepo(&repo)
+	//client.notifyMrRobot(&repo)
 	return &repo
 }
 
@@ -115,14 +120,21 @@ func (client *Gogeta) setVersionControl() {
 	dataType := strings.ToUpper(client.data[0].Type)
 	switch dataType {
 	case git:
-		scm := &sourcesystem.SystemSCM{}
+		scm := &sourcesystem.SystemSCM{Poller: 30}
 		scm.VersionControl = &sourcesystem.GitVersionControl{}
+		scm.Log = client.Log
 		client.SCM = scm
 		return
 	default:
 		client.Log.Info("SCM Type not found: " + dataType)
 		return
 	}
+}
+
+func (client Gogeta) defaultDirectory() string {
+	_, base, _, _ := runtime.Caller(0)
+	projectPath := filepath.Dir(base) + "/logs/"
+	return projectPath
 }
 
 func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {

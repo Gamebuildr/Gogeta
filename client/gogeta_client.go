@@ -2,8 +2,10 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
@@ -47,7 +49,13 @@ const git string = "GIT"
 func (client *Gogeta) Start() {
 	// logging system
 	log := logger.SystemLogger{}
-	saveSystem := logger.FileLogSave{LogFileName: logFileName}
+	rootDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		fmt.Printf(err.Error())
+		return
+	}
+	logDir := path.Join(rootDir, "client/logs", logFileName)
+	saveSystem := logger.FileLogSave{LogFileDir: logDir}
 	log.LogSave = saveSystem
 
 	// storage system
@@ -145,9 +153,11 @@ func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
 func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
 	fileName := repo.ProjectName + ".zip"
 	archive := path.Join(os.Getenv("GOPATH"), "/repos/", fileName)
+	archiveDir := client.data[0].BuildID
 	storageData := storehouse.StorageData{
-		Source: repo.SourceLocation,
-		Target: archive,
+		Source:    repo.SourceLocation,
+		Target:    archive,
+		TargetDir: archiveDir,
 	}
 	if err := client.Storage.StoreFiles(&storageData); err != nil {
 		client.Log.Error(err.Error())

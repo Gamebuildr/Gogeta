@@ -3,6 +3,7 @@ package storehouse
 import (
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 
 	"cloud.google.com/go/storage"
@@ -31,7 +32,7 @@ func (cloud GoogleCloud) Upload(data *StorageData) error {
 
 	defer file.Close()
 
-	fileName := filepath.Base(data.Target)
+	fileName := path.Join(data.TargetDir, filepath.Base(data.Target))
 
 	writer := client.Bucket(cloud.BucketName).Object(fileName).NewWriter(ctx)
 

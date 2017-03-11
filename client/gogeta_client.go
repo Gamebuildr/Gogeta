@@ -15,6 +15,7 @@ import (
 	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
 	"github.com/Gamebuildr/gamebuildr-compressor/pkg/compressor"
 	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/logger"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
@@ -68,7 +69,13 @@ func (client *Gogeta) Start() {
 	store.StorageSystem = cloudStorage
 
 	// queue system
-	sess := session.Must(session.NewSession())
+	awsSession, err := session.NewSession()
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+	awsSession.Config.Region = aws.String(os.Getenv(config.Region))
+
+	sess := session.Must(awsSession, nil)
 	amazonQueue := queuesystem.AmazonQueue{
 		Client: sqs.New(sess),
 		URL:    os.Getenv(config.QueueURL),

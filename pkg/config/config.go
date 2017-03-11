@@ -2,9 +2,6 @@ package config
 
 // Gogeta Environment Variables
 
-// RepoPath path to store cloned repositories
-const RepoPath = "REPO_PATH"
-
 // Region is the world region messages are coming from
 const Region = "REGION"
 

@@ -29,6 +29,10 @@ func (mock *MockCompression) Encode(source string, target string) error {
 	return nil
 }
 
+func (mock *MockCompression) Decode(source string, target string) error {
+	return nil
+}
+
 // MockLogger mocks out the logging system
 // specified in the gogeta client
 type MockLog struct {

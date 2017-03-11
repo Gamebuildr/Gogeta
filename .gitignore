@@ -26,3 +26,6 @@ _testmain.go
 *.swp
 config.json
 .vscode
+
+# Docker Specific
+./docker/libgit2

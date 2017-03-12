@@ -6,6 +6,10 @@ machine:
 
 dependencies:
   pre:
+    - echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
+    - sudo /opt/google-cloud-sdk/bin/gcloud
+    - sudo /opt/google-cloud-sdk/bin/gcloud auth activate-service-account
+    - sudo /opt/google-cloud-sdk/bin/gcloud config set project $GCLOUD_PROJECT
     - git clone -b v0.23.4 https://github.com/libgit2/libgit2.git --single-branch
     - cd libgit2/ && mkdir build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && sudo cmake --build . --target install
     - go get -t -d -v ./...

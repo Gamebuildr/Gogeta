@@ -12,7 +12,8 @@ RUN mkdir /libgit2; \
 COPY libgit2 /libgit2
 
 # Install libgit2
-RUN cd /libgit2/build; \
+RUN mkdir /libgit2/build; \
+    cd /libgit2/build; \
     cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local; \
     cmake --build . --target install; \
     rm -R /libgit2

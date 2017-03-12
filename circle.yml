@@ -6,6 +6,8 @@ machine:
 
 dependencies:
   pre:
+    - git clone -b v0.23.4 https://github.com/libgit2/libgit2.git --single-branch
+    - cd libgit2/ && mkdir build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && sudo cmake --build . --target install
     - docker build --rm=false -t gamebuildr/gogeta .
     - docker tag gamebuildr/gogeta gcr.io/gamebuildr-151415/gamebuildr-gogeta
 

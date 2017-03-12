@@ -1,0 +1,15 @@
+machine:
+  python:
+    version: 2.7.3
+  services:
+    - docker
+
+dependencies:
+  - docker build --rm=false -t gamebuildr/gogeta .
+  - docker tag gamebuildr/gogeta gcr.io/gamebuildr-151415/gamebuildr-gogeta
+
+deployment:
+  prod:
+    branch: master
+    commands:
+      - sudo /opt/google-cloud-sdk/bin/gcloud docker push gcr.io/gamebuildr-151415/gamebuildr-gogeta

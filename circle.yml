@@ -26,4 +26,4 @@ deployment:
       - docker build --rm=false -t gamebuildr/gogeta .
       - docker tag gamebuildr/gogeta gcr.io/gamebuildr-151415/gamebuildr-gogeta
       - sudo /opt/google-cloud-sdk/bin/gcloud docker -- push gcr.io/gamebuildr-151415/gamebuildr-gogeta
-      - sudo /opt/google-cloud-sdk/bin/gcloud compute ssh gogeta-instance-1 --command="sudo gcloud docker -- pull gcr.io/gamebuildr-151415/gamebuildr-gogeta"
+      - ssh -i ~/.ssh/circle-ci boomer@35.187.20.26 sudo gcloud docker -- pull gcr.io/gamebuildr-151415/gamebuildr-gogeta

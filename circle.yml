@@ -3,6 +3,8 @@ machine:
     version: 2.7.3
   services:
     - docker
+  environment:
+    GOBIN: "/home/ubuntu/bin"
 
 dependencies:
   pre:
@@ -14,6 +16,7 @@ dependencies:
     - cd libgit2/ && mkdir build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && sudo cmake --build . --target install
     - go get -t -d -v ./...
     - go build -v
+    - go install -v
 
 test:
   override:
@@ -23,6 +26,7 @@ deployment:
   prod:
     branch: master
     commands:
+      - cp /home/ubuntu/bin/Gogeta .
       - docker build --rm=false -t gamebuildr/gogeta .
       - docker tag gamebuildr/gogeta gcr.io/gamebuildr-151415/gamebuildr-gogeta
       - sudo /opt/google-cloud-sdk/bin/gcloud docker -- push gcr.io/gamebuildr-151415/gamebuildr-gogeta

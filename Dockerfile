@@ -1,5 +1,4 @@
 FROM debian:squeeze
-FROM golang:1.8.0
 
 # Add Compiled Gogeta 
 RUN mkdir -p /var/www/go/bin; \

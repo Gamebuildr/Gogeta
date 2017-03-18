@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
@@ -15,6 +14,7 @@ import (
 	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
 	"github.com/Gamebuildr/gamebuildr-compressor/pkg/compressor"
 	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/logger"
+	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/papertrail"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -50,13 +50,10 @@ const git string = "GIT"
 func (client *Gogeta) Start() {
 	// logging system
 	log := logger.SystemLogger{}
-	rootDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		fmt.Printf(err.Error())
-		return
+	saveSystem := &papertrail.PapertrailLogSave{
+		App: "Gogeta",
+		URL: os.Getenv(config.LogEndpoint),
 	}
-	logDir := path.Join(rootDir, "client/logs", logFileName)
-	saveSystem := logger.FileLogSave{LogFileDir: logDir}
 	log.LogSave = saveSystem
 
 	// storage system

@@ -17,7 +17,7 @@ func MockGogetaProcess(app *client.Gogeta) {
 		"repo":"https://github.com/dirty-casuals/Bloom",
 		"type":"GIT"}`
 	mockMessages := testutils.StubbedQueueMessage(mockdata)
-	app.Queue = queuesystem.AmazonQueue{
+	app.Queue = &queuesystem.AmazonQueue{
 		Client: testutils.MockedAmazonClient{Response: mockMessages.Resp},
 		URL:    "mockUrl_%d",
 	}

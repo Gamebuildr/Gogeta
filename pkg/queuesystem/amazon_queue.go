@@ -19,7 +19,7 @@ type AmazonQueue struct {
 
 // GetQueueMessages gets one message from the specified
 // Amazon SNS queue
-func (queue AmazonQueue) GetQueueMessages() ([]QueueMessage, error) {
+func (queue *AmazonQueue) GetQueueMessages() ([]QueueMessage, error) {
 	params := sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(queue.URL),
 		MaxNumberOfMessages: aws.Int64(1),
@@ -47,14 +47,14 @@ func (queue AmazonQueue) GetQueueMessages() ([]QueueMessage, error) {
 
 // DeleteMessageFromQueue deletes one message from the specified
 // Amazon SNS queue
-func (queue AmazonQueue) DeleteMessageFromQueue(receipt string) error {
+func (queue *AmazonQueue) DeleteMessageFromQueue(receipt string) (string, error) {
 	deleteMsg := &sqs.DeleteMessageInput{
 		QueueUrl:      aws.String(queue.URL),
 		ReceiptHandle: aws.String(receipt),
 	}
-	_, err := queue.Client.DeleteMessage(deleteMsg)
+	response, err := queue.Client.DeleteMessage(deleteMsg)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return response.String(), nil
 }

@@ -123,7 +123,7 @@ func TestDeleteMessageFromQueue(t *testing.T) {
 			URL: fmt.Sprintf("mockUrl_%d", i),
 		}
 		messages, _ := queue.GetQueueMessages()
-		err := queue.DeleteMessageFromQueue(messages[0].MessageReceipt)
+		_, err := queue.DeleteMessageFromQueue(messages[0].MessageReceipt)
 		if err != nil {
 			t.Fatalf("%d, amazon test error, %v", i, err)
 		}

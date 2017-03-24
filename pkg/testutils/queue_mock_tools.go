@@ -8,11 +8,13 @@ import (
 
 type MockedAmazonClient struct {
 	sqsiface.SQSAPI
-	Response sqs.ReceiveMessageOutput
+	Response       sqs.ReceiveMessageOutput
+	DeleteResponse sqs.DeleteMessageOutput
 }
 
 type MockedMessage struct {
-	Resp sqs.ReceiveMessageOutput
+	Resp      sqs.ReceiveMessageOutput
+	DeleteRsp sqs.DeleteMessageOutput
 }
 
 func StubbedQueueMessage(mockdata string) MockedMessage {
@@ -26,10 +28,15 @@ func StubbedQueueMessage(mockdata string) MockedMessage {
 				},
 			},
 		},
+		DeleteRsp: sqs.DeleteMessageOutput{},
 	}
 	return mockMessages
 }
 
 func (m MockedAmazonClient) ReceiveMessage(input *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
 	return &m.Response, nil
+}
+
+func (m MockedAmazonClient) DeleteMessage(input *sqs.DeleteMessageInput) (*sqs.DeleteMessageOutput, error) {
+	return &m.DeleteResponse, nil
 }

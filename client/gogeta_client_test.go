@@ -122,9 +122,12 @@ func TestGogetaClientClonesRepoIfMessageExists(t *testing.T) {
 	client.Storage = mockstore
 	client.Notifications = &mockNotify
 
-	client.Queue = queuesystem.AmazonQueue{
-		Client: testutils.MockedAmazonClient{Response: mockMessages.Resp},
-		URL:    "mockUrl_%d",
+	client.Queue = &queuesystem.AmazonQueue{
+		Client: testutils.MockedAmazonClient{
+			Response:       mockMessages.Resp,
+			DeleteResponse: mockMessages.DeleteRsp,
+		},
+		URL: "mockUrl_%d",
 	}
 
 	repo := client.RunGogetaClient()
@@ -156,7 +159,7 @@ func TestGogetaClientReturnsNilIfMessagesAreEmpty(t *testing.T) {
 	client.Log = mockLog
 	client.SCM = mockSCM
 
-	client.Queue = queuesystem.AmazonQueue{
+	client.Queue = &queuesystem.AmazonQueue{
 		Client: testutils.MockedAmazonClient{Response: mockMessages.Resp},
 		URL:    "mockUrl_%d",
 	}

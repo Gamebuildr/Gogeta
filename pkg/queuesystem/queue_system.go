@@ -4,7 +4,7 @@ package queuesystem
 // data from a specified queue system
 type Messages interface {
 	GetQueueMessages() ([]QueueMessage, error)
-	DeleteMessageFromQueue(string) error
+	DeleteMessageFromQueue(receipt string) (string, error)
 }
 
 // QueueMessage is the abstraction for formatting

@@ -39,9 +39,8 @@ func (queue *AmazonQueue) GetQueueMessages() ([]QueueMessage, error) {
 			return nil, err
 		}
 		messages[i] = parsedMsg
-		messages[i].MessageReceipt = *msg.ReceiptHandle
+		messages[i].Message.MessageReceipt = *msg.ReceiptHandle
 	}
-
 	return messages, nil
 }
 

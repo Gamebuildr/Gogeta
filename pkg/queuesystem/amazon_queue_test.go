@@ -26,6 +26,19 @@ func (m MockedAmazonClient) DeleteMessage(input *sqs.DeleteMessageInput) (*sqs.D
 }
 
 func TestGetQueueMessages(t *testing.T) {
+	expectedData := QueueMessage{
+		Message{
+			Project:        "Gogeta",
+			EngineName:     "mockengine",
+			EnginePlatform: "windows",
+			EngineVersion:  "5.2.3f1",
+			BuildrID:       "1234",
+			BuildID:        "1",
+			Repo:           "repo.mock.url",
+			Type:           "mockscm",
+			MessageReceipt: "mockReceipts",
+		},
+	}
 	messageReceipt := "mockReceipts"
 	mockdata := `{"project":"Gogeta",
 		"enginename":"mockengine",
@@ -48,19 +61,7 @@ func TestGetQueueMessages(t *testing.T) {
 					},
 				},
 			},
-			Expected: []QueueMessage{
-				{
-					Project:        "Gogeta",
-					EngineName:     "mockengine",
-					EnginePlatform: "windows",
-					EngineVersion:  "5.2.3f1",
-					BuildrID:       "1234",
-					BuildID:        "1",
-					Repo:           "repo.mock.url",
-					Type:           "mockscm",
-					MessageReceipt: "mockReceipts",
-				},
-			},
+			Expected: []QueueMessage{expectedData},
 		},
 	}
 

@@ -1,15 +1,13 @@
 package queuesystem
 
-// Messages is the base struct for getting
-// data from a specified queue system
+// Messages is the base struct for getting data from a specified queue system
 type Messages interface {
 	GetQueueMessages() ([]QueueMessage, error)
 	DeleteMessageFromQueue(receipt string) (string, error)
 }
 
-// QueueMessage is the abstraction for formatting
-// and using data that comes from the queues
-type QueueMessage struct {
+// Message formats the message data that comes from the queues into a json struct
+type Message struct {
 	ArchivePath    string `json:"archivepath"`
 	Project        string `json:"project"`
 	EngineName     string `json:"enginename"`
@@ -20,4 +18,9 @@ type QueueMessage struct {
 	Repo           string `json:"repo"`
 	Type           string `json:"type"`
 	MessageReceipt string
+}
+
+// QueueMessage is the abstraction for formatting and using data that comes from the queues
+type QueueMessage struct {
+	Message
 }

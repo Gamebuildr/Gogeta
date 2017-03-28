@@ -97,13 +97,13 @@ func TestGogetaClientLogsErrors(t *testing.T) {
 func TestGogetaClientClonesRepoIfMessageExists(t *testing.T) {
 	mockPath := "/mock/repo/location"
 	mockdata := `{"project":"Gogeta",
+		"engineversion":"5.2.3f1",
 		"enginename":"mockengine",
 		"engineplatform":"windows",
-		"engineversion":"5.2.3f1",
 		"buildrid":"1234",
 		"buildid":"1",
-		"repo":"repo.mock.url",
-		"type":"mockscm"}`
+		"repotype":"mockscm",
+		"repourl":"repo.mock.url"}`
 	mockMessages := testutils.StubbedQueueMessage(mockdata)
 	client := &Gogeta{}
 	mockLog := &MockLogger{}

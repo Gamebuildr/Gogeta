@@ -132,7 +132,7 @@ func (client *Gogeta) queueMessages() {
 }
 
 func (client *Gogeta) setVersionControl() {
-	dataType := strings.ToUpper(client.data[0].Type)
+	dataType := strings.ToUpper(client.data[0].RepoType)
 	switch dataType {
 	case git:
 		scm := &sourcesystem.SystemSCM{}
@@ -148,7 +148,7 @@ func (client *Gogeta) setVersionControl() {
 func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
 	message := client.data[0]
 	project := message.Project
-	origin := message.Repo
+	origin := message.RepoURL
 
 	if project == "" || origin == "" {
 		return
@@ -165,7 +165,7 @@ func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
 func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
 	fileName := repo.ProjectName + ".zip"
 	archive := path.Join(os.Getenv("GOPATH"), "/repos/", fileName)
-	archiveDir := client.data[0].BuildID
+	archiveDir := client.data[0].ID
 	storageData := storehouse.StorageData{
 		Source:    repo.SourceLocation,
 		Target:    archive,
@@ -181,12 +181,12 @@ func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) {
 	data := client.data[0]
 	message := MrRobotMessage{
 		ArchivePath:    data.ArchivePath,
+		BuildID:        data.ID,
 		Project:        data.Project,
 		EngineName:     data.EngineName,
-		EnginePlatform: data.EnginePlatform,
 		EngineVersion:  data.EngineVersion,
+		EnginePlatform: data.EnginePlatform,
 		BuildrID:       data.BuildrID,
-		BuildID:        data.BuildID,
 	}
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {

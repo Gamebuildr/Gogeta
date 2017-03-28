@@ -29,25 +29,27 @@ func TestGetQueueMessages(t *testing.T) {
 	expectedData := QueueMessage{
 		Message{
 			Project:        "Gogeta",
+			ID:             "1",
 			EngineName:     "mockengine",
-			EnginePlatform: "windows",
 			EngineVersion:  "5.2.3f1",
+			EnginePlatform: "windows",
 			BuildrID:       "1234",
-			BuildID:        "1",
-			Repo:           "repo.mock.url",
-			Type:           "mockscm",
+			RepoType:       "mockscm",
+			RepoURL:        "repo.mock.url",
+			BuildOwner:     "user",
 			MessageReceipt: "mockReceipts",
 		},
 	}
 	messageReceipt := "mockReceipts"
 	mockdata := `{"project":"Gogeta",
+		"id":"1",
 		"enginename":"mockengine",
-		"engineplatform":"windows",
 		"engineversion":"5.2.3f1",
+		"engineplatform":"windows",
 		"buildrid":"1234",
-		"buildid":"1",
-		"repo":"repo.mock.url",
-		"type":"mockscm"}`
+		"repotype":"mockscm",
+		"repourl":"repo.mock.url",
+		"buildowner":"user"}`
 	mockMessages := []struct {
 		Resp     sqs.ReceiveMessageOutput
 		Expected []QueueMessage

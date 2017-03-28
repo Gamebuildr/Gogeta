@@ -9,14 +9,15 @@ type Messages interface {
 // Message formats the message data that comes from the queues into a json struct
 type Message struct {
 	ArchivePath    string `json:"archivepath"`
+	ID             string `json:"id"`
 	Project        string `json:"project"`
 	EngineName     string `json:"enginename"`
-	EnginePlatform string `json:"engineplatform"`
 	EngineVersion  string `json:"engineversion"`
+	EnginePlatform string `json:"engineplatform"`
 	BuildrID       string `json:"buildrid"`
-	BuildID        string `json:"buildid"`
-	Repo           string `json:"repo"`
-	Type           string `json:"type"`
+	RepoType       string `json:"repotype"`
+	RepoURL        string `json:"repourl"`
+	BuildOwner     string `json:"buildowner"`
 	MessageReceipt string
 }
 

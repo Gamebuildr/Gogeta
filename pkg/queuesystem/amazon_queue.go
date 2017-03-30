@@ -3,6 +3,8 @@ package queuesystem
 import (
 	"encoding/json"
 
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
@@ -38,8 +40,10 @@ func (queue *AmazonQueue) GetQueueMessages() ([]QueueMessage, error) {
 		if err := json.Unmarshal([]byte(aws.StringValue(msg.Body)), &parsedMsg); err != nil {
 			return nil, err
 		}
+		fmt.Printf("PARSED: %v", parsedMsg.Message)
+		// fmt.Printf("PARSED: %v", aws.StringValue(msg.Body))
 		messages[i] = parsedMsg
-		messages[i].Message.MessageReceipt = *msg.ReceiptHandle
+		messages[i].MessageReceipt = *msg.ReceiptHandle
 	}
 	return messages, nil
 }

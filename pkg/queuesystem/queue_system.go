@@ -7,7 +7,22 @@ type Messages interface {
 }
 
 // Message formats the message data that comes from the queues into a json struct
-type Message struct {
+// type Message struct {
+// 	ArchivePath    string `json:"archivepath"`
+// 	ID             string `json:"id"`
+// 	Project        string `json:"project"`
+// 	EngineName     string `json:"enginename"`
+// 	EngineVersion  string `json:"engineversion"`
+// 	EnginePlatform string `json:"engineplatform"`
+// 	BuildrID       string `json:"buildrid"`
+// 	RepoType       string `json:"repotype"`
+// 	RepoURL        string `json:"repourl"`
+// 	BuildOwner     string `json:"buildowner"`
+// 	MessageReceipt string
+// }
+
+// QueueMessage is the abstraction for formatting and using data that comes from the queues
+type QueueMessage struct {
 	ArchivePath    string `json:"archivepath"`
 	ID             string `json:"id"`
 	Project        string `json:"project"`
@@ -19,9 +34,7 @@ type Message struct {
 	RepoURL        string `json:"repourl"`
 	BuildOwner     string `json:"buildowner"`
 	MessageReceipt string
-}
-
-// QueueMessage is the abstraction for formatting and using data that comes from the queues
-type QueueMessage struct {
-	Message
+	Message        struct {
+		EngineName string `json:"enginename"`
+	}
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
+	"github.com/Gamebuildr/Gogeta/pkg/credentials"
 	"github.com/Gamebuildr/Gogeta/pkg/publisher"
 	"github.com/Gamebuildr/Gogeta/pkg/queuesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
@@ -91,6 +92,13 @@ func (client *Gogeta) Start() {
 	client.Storage = store
 	client.Queue = amazonQueue
 	client.Notifications = &notifications
+
+	// Generate gcloud service .json file
+	creds := credentials.GcloudCredentials{}
+	creds.JSON = credentials.GcloudJSONCredentials{}
+	if err := creds.GenerateAccount(); err != nil {
+		client.Log.Error(err.Error())
+	}
 }
 
 // RunGogetaClient will run the complete gogeta scm system

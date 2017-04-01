@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
 )
@@ -34,6 +35,7 @@ func (gcloud GcloudCredentials) GenerateAccount() error {
 	if err != nil {
 		return err
 	}
+
 	if err = gcloud.JSON.writeToJSONFile(file, decodedKey); err != nil {
 		return err
 	}
@@ -42,7 +44,8 @@ func (gcloud GcloudCredentials) GenerateAccount() error {
 }
 
 func (gcloud GcloudCredentials) decodeBase64Key() ([]byte, error) {
-	key := os.Getenv(config.GcloudServiceKey)
+	key := strings.Replace(os.Getenv(config.GcloudServiceKey), " ", "", -1)
+
 	decodedKey, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
 		return nil, err

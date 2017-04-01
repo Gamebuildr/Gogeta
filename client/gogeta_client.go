@@ -119,12 +119,12 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	if repo.SourceLocation == "" {
 		return &repo
 	}
+
 	_, err := client.Queue.DeleteMessageFromQueue(client.data[0].MessageReceipt)
 	if err != nil {
 		client.Log.Error(err.Error())
 		return &repo
 	}
-	client.Log.Info("Amazon Delete Message: " + client.data[0].MessageReceipt)
 
 	client.archiveRepo(&repo)
 	client.notifyMrRobot(&repo)

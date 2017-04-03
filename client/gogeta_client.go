@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
-	"github.com/Gamebuildr/Gogeta/pkg/credentials"
 	"github.com/Gamebuildr/Gogeta/pkg/publisher"
 	"github.com/Gamebuildr/Gogeta/pkg/queuesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
 	"github.com/Gamebuildr/gamebuildr-compressor/pkg/compressor"
+	"github.com/Gamebuildr/gamebuildr-credentials/pkg/credentials"
 	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/logger"
 	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/papertrail"
 	"github.com/aws/aws-sdk-go/aws"
@@ -174,6 +174,7 @@ func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
 	fileName := repo.ProjectName + ".zip"
 	archive := path.Join(os.Getenv("GOPATH"), "/repos/", fileName)
 	archiveDir := client.data[0].ID
+	archivePath := path.Join(archiveDir, fileName)
 	storageData := storehouse.StorageData{
 		Source:    repo.SourceLocation,
 		Target:    archive,
@@ -182,7 +183,7 @@ func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
 	if err := client.Storage.StoreFiles(&storageData); err != nil {
 		client.Log.Error(err.Error())
 	}
-	client.data[0].ArchivePath = fileName
+	client.data[0].ArchivePath = archivePath
 }
 
 func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) {

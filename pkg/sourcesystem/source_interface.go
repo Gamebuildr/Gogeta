@@ -3,8 +3,6 @@ package sourcesystem
 import (
 	"os"
 	"path"
-
-	uuid "github.com/satori/go.uuid"
 )
 
 // VersionControl is the interface for specific
@@ -27,7 +25,7 @@ type SystemSCM SourceControlManager
 // AddSource for SystemSCM will gather source code
 // and then save the files to the local filesystem
 func (scm SystemSCM) AddSource(repo *SourceRepository) error {
-	location := createSourceFolder(repo.ProjectName)
+	location := path.Join(os.Getenv("GOPATH"), "repos", repo.ProjectName)
 	err := scm.VersionControl.CloneSource(repo, location)
 	repo.SourceLocation = location
 	if err != nil {
@@ -44,10 +42,4 @@ func (scm SystemSCM) UpdateSource(repo *SourceRepository) error {
 		return err
 	}
 	return nil
-}
-
-func createSourceFolder(project string) string {
-	uuid := uuid.NewV4()
-	sourceFolder := path.Join(os.Getenv("GOPATH"), "/repos/", project+"_"+uuid.String())
-	return sourceFolder
 }

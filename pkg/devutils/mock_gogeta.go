@@ -8,13 +8,13 @@ import (
 
 // MockGogetaProcess will create a fake queue message, clone a repo, and upload it to google cloud
 func MockGogetaProcess(app *client.Gogeta) {
-	mockdata := `{"project":"Bloom",
-		"enginename":"Godot",
-		"engineplatform":"linux",
-		"engineversion":"2.1",
-		"buildrid":"Bloom_Linux",
-		"buildid":"584f1d50d8d55300128bab04",
-		"repo":"https://github.com/dirty-casuals/Bloom",
+	mockdata := `{"project":"Calamity",
+		"enginename":"Unity",
+		"engineplatform":"windows",
+		"engineversion":"5.2.3f1",
+		"buildrid":"1234",
+		"buildid":"1",
+		"repo":"https://github.com/dirty-casuals/Calamity.git",
 		"type":"GIT"}`
 	mockMessages := testutils.StubbedQueueMessage(mockdata)
 	app.Queue = &queuesystem.AmazonQueue{
@@ -22,3 +22,5 @@ func MockGogetaProcess(app *client.Gogeta) {
 		URL:    "mockUrl_%d",
 	}
 }
+
+//https://github.com/dirty-casuals/Calamity.git

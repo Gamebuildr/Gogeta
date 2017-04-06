@@ -10,6 +10,18 @@ func (scm MockVersionControl) CloneSource(repo *SourceRepository, location strin
 	return nil
 }
 
+func (scm MockVersionControl) SourceFolderSize(location string) int64 {
+	return 0
+}
+
+func (scm MockVersionControl) GetRepoSize() int {
+	return 3000
+}
+
+func (scm MockVersionControl) StopCloneProcess() error {
+	return nil
+}
+
 func (scm MockVersionControl) PullSource() error {
 	return nil
 }

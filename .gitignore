@@ -29,3 +29,4 @@ config.json
 
 # Docker Specific
 /docker/libgit2
+gcloud_service_account.json

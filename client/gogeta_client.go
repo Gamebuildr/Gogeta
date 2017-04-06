@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
@@ -121,7 +119,6 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	if repo.SourceLocation == "" {
 		return &repo
 	}
-<<<<<<< HEAD
 
 	_, err := client.Queue.DeleteMessageFromQueue(client.data[0].MessageReceipt)
 	if err != nil {
@@ -131,10 +128,7 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 
 	client.archiveRepo(&repo)
 	client.notifyMrRobot(&repo)
-=======
-	//client.archiveRepo(&repo)
-	//client.notifyMrRobot(&repo)
->>>>>>> a20963f38e8f51b402d051bdb8ff83c178d175d7
+
 	return &repo
 }
 
@@ -159,12 +153,6 @@ func (client *Gogeta) setVersionControl() {
 		client.Log.Info("SCM Type not found: " + dataType)
 		return
 	}
-}
-
-func (client Gogeta) defaultDirectory() string {
-	_, base, _, _ := runtime.Caller(0)
-	projectPath := filepath.Dir(base) + "/logs/"
-	return projectPath
 }
 
 func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {

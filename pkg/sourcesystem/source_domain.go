@@ -18,10 +18,13 @@ type SourceRepository struct {
 	SourceLocation string
 }
 
+// Largest repo size allowed
+var maxRepoSize int64 = 3000
+
 // SizeLimitsReached returns true if the repo being clone is too large
 // for the user's payment tier
 func (repo SourceRepository) SizeLimitsReached(size int64) bool {
-	if size >= 3000 {
+	if size >= maxRepoSize {
 		return true
 	}
 	return false

@@ -1,7 +1,6 @@
 package sourcesystem
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"time"
@@ -44,7 +43,7 @@ func (scm SystemSCM) AddSource(repo *SourceRepository) error {
 	location := path.Join(os.Getenv("GOPATH"), "repos", repo.ProjectName)
 	repo.SourceLocation = location
 
-	go scm.checkSourceSize(repo)
+	go scm.getRepoInfo(repo)
 	if err := scm.VersionControl.CloneSource(repo, location); err != nil {
 		return err
 	}
@@ -61,24 +60,29 @@ func (scm SystemSCM) UpdateSource(repo *SourceRepository) error {
 	return nil
 }
 
-func (scm *SystemSCM) checkSourceSize(repo *SourceRepository) {
-	ticker := time.NewTicker(5 * time.Second)
+func (scm *SystemSCM) getRepoInfo(repo *SourceRepository) {
+	ticker := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-ticker.C:
-			limit := scm.VersionControl.SourceFolderSize(repo.SourceLocation)
-			kilobytes := limit / 1000
-			megabytes := kilobytes / 1000
-
-			fmt.Printf("Repo Size: %v", megabytes)
-
-			if repo.SizeLimitsReached(megabytes) {
-				if err := scm.VersionControl.StopCloneProcess(); err != nil {
-					scm.Log.Info(err.Error())
-					scm.Log.Info("Repository Larger than 3GB.")
-				}
+			if scm.sourceSizeTooLarge(repo) {
 				ticker.Stop()
 			}
 		}
 	}
+}
+
+func (scm *SystemSCM) sourceSizeTooLarge(repo *SourceRepository) bool {
+	limit := scm.VersionControl.SourceFolderSize(repo.SourceLocation)
+	kilobytes := limit / 1000
+	megabytes := kilobytes / 1000
+
+	if repo.SizeLimitsReached(megabytes) {
+		scm.Log.Info("Repository Larger than 3GB.")
+		if err := scm.VersionControl.StopCloneProcess(); err != nil {
+			scm.Log.Error(err.Error())
+		}
+		return true
+	}
+	return false
 }

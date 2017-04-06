@@ -11,6 +11,8 @@ import (
 func main() {
 	app := client.Gogeta{}
 	app.Start()
+	// Use mock gogeta process to read off amazon queues in
+	// development without hitting API
 	if os.Getenv(config.GoEnv) == "development" {
 		devutils.MockGogetaProcess(&app)
 	}

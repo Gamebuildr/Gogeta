@@ -144,7 +144,7 @@ func (client *Gogeta) setVersionControl() {
 	dataType := strings.ToUpper(client.data[0].RepoType)
 	switch dataType {
 	case git:
-		scm := &sourcesystem.SystemSCM{Poller: 30}
+		scm := &sourcesystem.SystemSCM{}
 		scm.VersionControl = &sourcesystem.GitVersionControl{}
 		scm.Log = client.Log
 		client.SCM = scm
@@ -174,7 +174,7 @@ func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
 
 func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
 	fileName := repo.ProjectName + ".zip"
-	archive := path.Join(os.Getenv("GOPATH"), "/repos/", fileName)
+	archive := path.Join(os.Getenv("GOPATH"), "repos", fileName)
 	archiveDir := client.data[0].ID
 	archivePath := path.Join(archiveDir, fileName)
 	storageData := storehouse.StorageData{

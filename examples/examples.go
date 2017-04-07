@@ -17,7 +17,7 @@ func SourceControlExample() {
 	scm := new(sourcesystem.SystemSCM)
 
 	// Inject specific VersionControl implementation
-	scm.VersionControl = sourcesystem.GitVersionControl{}
+	scm.VersionControl = &sourcesystem.GitVersionControl{}
 
 	// Setup the source control repo data
 	repo := sourcesystem.SourceRepository{

@@ -1,16 +1,43 @@
 package sourcesystem
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
-type MockVersionControl struct{}
+type MockLogger struct{}
+
+type MockVersionControl struct {
+	repoSize               int64
+	stopCloneProcessCalled bool
+}
 
 type MockSCM SourceControlManager
 
-func (scm MockVersionControl) CloneSource(repo *SourceRepository, location string) error {
+func (mocklog MockLogger) Info(info string) string {
+	fmt.Printf(info)
+	return info
+}
+
+func (mocklog MockLogger) Error(err string) string {
+	fmt.Printf(err)
+	return err
+}
+
+func (scm *MockVersionControl) CloneSource(repo *SourceRepository, location string) error {
 	return nil
 }
 
-func (scm MockVersionControl) PullSource() error {
+func (scm *MockVersionControl) StopCloneProcess() error {
+	scm.stopCloneProcessCalled = true
+	return nil
+}
+
+func (scm *MockVersionControl) SourceFolderSize(location string) int64 {
+	return scm.repoSize
+}
+
+func (scm *MockVersionControl) PullSource() error {
 	return nil
 }
 
@@ -42,11 +69,46 @@ func TestAddSourceModifiesRepositoryValues(t *testing.T) {
 
 func TestSystemSCMUpdatesSourceRepositoryLocation(t *testing.T) {
 	scm := new(SystemSCM)
-	scm.VersionControl = MockVersionControl{}
+	scm.VersionControl = &MockVersionControl{}
 	repo := mockSourceRepository()
 	scm.AddSource(&repo)
 
 	if repo.SourceLocation == "" {
 		t.Errorf("Expected SourceLocation to be not empty")
+	}
+}
+
+func TestSystemSCMStopsCloneIfRepositoryBiggerThan3Gigabytes(t *testing.T) {
+	scm := SystemSCM{}
+	repo := mockSourceRepository()
+	mockVersionControl := MockVersionControl{}
+	scm.VersionControl = &mockVersionControl
+	scm.Log = MockLogger{}
+
+	mockVersionControl.repoSize = 3000000000 //bytes
+
+	cloneStopped := scm.sourceSizeTooLarge(&repo)
+	if !mockVersionControl.stopCloneProcessCalled {
+		t.Errorf("Expected StopCloneProcess to be called")
+	}
+	if !cloneStopped {
+		t.Errorf("Expected SourceSizeTooLarge to return true")
+	}
+}
+
+func TestSystemSCMDoesntStopCloneIfRepoSmallEnough(t *testing.T) {
+	scm := SystemSCM{}
+	repo := mockSourceRepository()
+	mockVersionControl := MockVersionControl{}
+	scm.VersionControl = &mockVersionControl
+	scm.Log = MockLogger{}
+	mockVersionControl.repoSize = 3000 //bytes
+
+	cloneStopped := scm.sourceSizeTooLarge(&repo)
+	if mockVersionControl.stopCloneProcessCalled {
+		t.Errorf("Expected StopCloneProcess to NOT be called")
+	}
+	if cloneStopped {
+		t.Errorf("Expected SourceSizeTooLarge to return false")
 	}
 }

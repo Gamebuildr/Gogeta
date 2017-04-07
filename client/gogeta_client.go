@@ -128,6 +128,7 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 
 	client.archiveRepo(&repo)
 	client.notifyMrRobot(&repo)
+
 	return &repo
 }
 
@@ -145,6 +146,7 @@ func (client *Gogeta) setVersionControl() {
 	case git:
 		scm := &sourcesystem.SystemSCM{}
 		scm.VersionControl = &sourcesystem.GitVersionControl{}
+		scm.Log = client.Log
 		client.SCM = scm
 		return
 	default:
@@ -172,7 +174,7 @@ func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
 
 func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
 	fileName := repo.ProjectName + ".zip"
-	archive := path.Join(os.Getenv("GOPATH"), "/repos/", fileName)
+	archive := path.Join(os.Getenv("GOPATH"), "repos", fileName)
 	archiveDir := client.data[0].ID
 	archivePath := path.Join(archiveDir, fileName)
 	storageData := storehouse.StorageData{

@@ -5,8 +5,6 @@ package sourcesystem
 type SourceSystem interface {
 	AddSource(repo *SourceRepository) error
 	UpdateSource(repo *SourceRepository) error
-	//MakeSourceAvailable()
-	//RemoveSource()
 }
 
 // SourceRepository is the base entity for Gogetas
@@ -20,5 +18,14 @@ type SourceRepository struct {
 	SourceLocation string
 }
 
-//TODO: Potentially add the limit of repo size by
-// customer type here in the domain
+// Largest repo size allowed
+var maxRepoSize int64 = 3000
+
+// SizeLimitsReached returns true if the repo being clone is too large
+// for the user's payment tier
+func (repo SourceRepository) SizeLimitsReached(size int64) bool {
+	if size >= maxRepoSize {
+		return true
+	}
+	return false
+}

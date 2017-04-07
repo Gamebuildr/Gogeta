@@ -2,36 +2,70 @@ package sourcesystem
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"syscall"
 
 	git "gopkg.in/libgit2/git2go.v23"
 )
 
 // GitVersionControl is the git implemenation
 // of the SourceControlManager
-type GitVersionControl struct{}
+type GitVersionControl struct {
+	command *exec.Cmd
+}
 
 // CloneSource implements a git shallow clone of depth 2
-func (scm GitVersionControl) CloneSource(repo *SourceRepository, location string) error {
+func (scm *GitVersionControl) CloneSource(repo *SourceRepository, location string) error {
 	cmd := exec.Command("git", "clone", "--depth", "2", repo.SourceOrigin, location)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	cmdErr := cmd.Start()
-	if cmdErr != nil {
-		return cmdErr
+	scm.command = cmd
+	if err := cmd.Start(); err != nil {
+		return err
 	}
-	cloneErr := cmd.Wait()
-	if cloneErr != nil {
-		return cloneErr
+	if err := cmd.Wait(); err != nil {
+		return err
 	}
-	credErr := createGitCredentials(location)
-	if credErr != nil {
-		return credErr
+	if err := createGitCredentials(location); err != nil {
+		return err
 	}
 	return nil
 }
 
-// PullSource implements a simple git pull from a
-// remote repo
+// StopCloneProcess will interrupt the clone process
+func (scm *GitVersionControl) StopCloneProcess() error {
+	cmd := scm.command
+	if scm.command != nil {
+		pgid, err := syscall.Getpgid(cmd.Process.Pid)
+		if err != nil {
+			return err
+		}
+		if err := syscall.Kill(-pgid, 15); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SourceFolderSize will return the size of the source folder
+func (scm *GitVersionControl) SourceFolderSize(location string) int64 {
+	var size int64
+	err := filepath.Walk(location, func(_ string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return err
+	})
+	if err != nil {
+		fmt.Printf(err.Error())
+	}
+	return size
+}
+
+// PullSource implements a simple git pull from a remote repo
 func (scm GitVersionControl) PullSource() error {
 	return errors.New("Not Implemented Yet")
 }

@@ -1,7 +1,7 @@
 package publisher
 
-// Notifications are differnt types of messages to be sent to an endpoint
-type Notifications interface {
+// Publish allows messages to be sent to various endpoint destinations
+type Publish interface {
 	SendSimpleMessage(msg *Message)
 	SendJSON(msg *Message)
 }

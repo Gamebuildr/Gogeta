@@ -23,16 +23,15 @@ import (
 
 // Gogeta is the source control manager implementation
 type Gogeta struct {
-	Queue         queuesystem.Messages
-	Log           logger.Log
-	SCM           sourcesystem.SourceSystem
-	Storage       storehouse.StoreHouse
-	Notifications publisher.Notifications
-	data          []queuesystem.QueueMessage
+	Queue     queuesystem.Messages
+	Log       logger.Log
+	SCM       sourcesystem.SourceSystem
+	Storage   storehouse.StoreHouse
+	Publisher publisher.Publish
+	data      []queuesystem.QueueMessage
 }
 
-// MrRobotMessage is the data needed to send to MrRobot
-type MrRobotMessage struct {
+type mrRobotMessage struct {
 	ArchivePath    string `json:"archivepath"`
 	Project        string `json:"project"`
 	EngineName     string `json:"enginename"`
@@ -41,6 +40,15 @@ type MrRobotMessage struct {
 	BuildrID       string `json:"buildrid"`
 	BuildID        string `json:"buildid"`
 }
+
+type gamebuildrMessage struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+	Order   int    `json:"order"`
+	BuildID string `json:"buildid"`
+}
+
+const buildrMessage string = "BUILDR_MESSAGE"
 
 const logFileName string = "gogeta_client_"
 
@@ -91,7 +99,7 @@ func (client *Gogeta) Start() {
 	client.Log = log
 	client.Storage = store
 	client.Queue = amazonQueue
-	client.Notifications = &notifications
+	client.Publisher = &notifications
 
 	// Generate gcloud service .json file
 	creds := credentials.GcloudCredentials{}
@@ -190,7 +198,7 @@ func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
 
 func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) {
 	data := client.data[0]
-	message := MrRobotMessage{
+	message := mrRobotMessage{
 		ArchivePath:    data.ArchivePath,
 		BuildID:        data.ID,
 		Project:        data.Project,
@@ -209,5 +217,27 @@ func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) {
 		Subject:  "Buildr Request",
 		Endpoint: os.Getenv(config.MrrobotNotifications),
 	}
-	client.Notifications.SendJSON(&notification)
+	client.Publisher.SendJSON(&notification)
+}
+
+func (client *Gogeta) sendDashboardMessage(messageInfo string, order int) {
+	data := client.data[0]
+
+	message := gamebuildrMessage{
+		Type:    buildrMessage,
+		Message: messageInfo,
+		Order:   order,
+		BuildID: data.ID,
+	}
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		client.Log.Error(err.Error())
+		return
+	}
+	notification := publisher.Message{
+		JSON:     jsonMessage,
+		Subject:  "Buildr Message",
+		Endpoint: os.Getenv(config.GamebuildrNotifications),
+	}
+	client.Publisher.SendJSON(&notification)
 }

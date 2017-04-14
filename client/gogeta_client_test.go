@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 
+	"errors"
+
 	"github.com/Gamebuildr/Gogeta/pkg/publisher"
 	"github.com/Gamebuildr/Gogeta/pkg/queuesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
@@ -58,9 +60,13 @@ func (logger *MockLogger) Error(err string) string {
 // MockSCM mocks out the source control manager specified in the gogeta client
 type MockSCM struct {
 	TestData string
+	RepoSize int64
 }
 
 func (scm *MockSCM) AddSource(repo *sourcesystem.SourceRepository) error {
+	if repo.SizeLimitsReached(scm.RepoSize) {
+		return errors.New("Mock Size Limit Reached")
+	}
 	repo.SourceLocation = "/mock/repo/location"
 	return nil
 }
@@ -71,9 +77,11 @@ func (scm *MockSCM) UpdateSource(repo *sourcesystem.SourceRepository) error {
 
 // MockPublisher mocks our the pubisher system in the gogeta client
 type MockPublisher struct {
-	SendJSONCalled bool
-	MockMessage    gamebuildrMessage
+	SendJSONCallCount int
+	MockMessage       gamebuildrMessage
 }
+
+var mockPublisher = MockPublisher{}
 
 func (service *MockPublisher) SendSimpleMessage(msg *publisher.Message) {
 	if err := json.Unmarshal(msg.JSON, &service.MockMessage); err != nil {
@@ -85,7 +93,37 @@ func (service *MockPublisher) SendJSON(msg *publisher.Message) {
 	if err := json.Unmarshal(msg.JSON, &service.MockMessage); err != nil {
 		fmt.Printf(err.Error())
 	}
-	service.SendJSONCalled = true
+	fmt.Printf(msg.Message)
+	service.SendJSONCallCount++
+}
+
+func mockGogetaClient(mockdata string, reposize int64) *Gogeta {
+	// Reset Publisher each client setup
+	mockPublisher = MockPublisher{}
+	mockMessages := testutils.StubbedQueueMessage(mockdata)
+	client := &Gogeta{}
+	mockLog := &MockLogger{}
+	mockSCM := &MockSCM{RepoSize: reposize}
+	mockstore := new(storehouse.Compressed)
+	mockCompression := MockCompression{}
+	mockStorage := MockStorage{}
+
+	mockstore.Compression = &mockCompression
+	mockstore.StorageSystem = &mockStorage
+
+	client.Log = mockLog
+	client.SCM = mockSCM
+	client.Storage = mockstore
+	client.Publisher = &mockPublisher
+
+	client.Queue = &queuesystem.AmazonQueue{
+		Client: testutils.MockedAmazonClient{
+			Response:       mockMessages.Resp,
+			DeleteResponse: mockMessages.DeleteRsp,
+		},
+		URL: "mockUrl_%d",
+	}
+	return client
 }
 
 // Main gogeta client tests
@@ -120,41 +158,9 @@ func TestGogetaClientClonesRepoIfMessageExists(t *testing.T) {
 	mockPath := "/mock/repo/location"
 	mockdata := `{
 		"Type" : "Notification",
-		"MessageId" : "5481de82-a256-5ebc-a972-8fd4b77f5775",
-		"TopicArn" : "arn:aws:sns:eu-west-1:452978454880:gogeta_message",
-		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}",
-		"Timestamp" : "mock",
-		"SignatureVersion" : "1",
-		"Signature" : "123435",
-		"SigningCertURL" : "signing_cert",
-		"UnsubscribeURL" : "url_unsub"
+		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}"
 	}`
-	mockMessages := testutils.StubbedQueueMessage(mockdata)
-	client := &Gogeta{}
-	mockLog := &MockLogger{}
-	mockSCM := &MockSCM{}
-	application := MockPubSubApp{}
-	mockNotify := publisher.SimpleNotification{Application: &application}
-	mockstore := new(storehouse.Compressed)
-	mockCompression := MockCompression{}
-	mockStorage := MockStorage{}
-
-	mockstore.Compression = &mockCompression
-	mockstore.StorageSystem = &mockStorage
-
-	client.Log = mockLog
-	client.SCM = mockSCM
-	client.Storage = mockstore
-	client.Publisher = &mockNotify
-
-	client.Queue = &queuesystem.AmazonQueue{
-		Client: testutils.MockedAmazonClient{
-			Response:       mockMessages.Resp,
-			DeleteResponse: mockMessages.DeleteRsp,
-		},
-		URL: "mockUrl_%d",
-	}
-
+	client := mockGogetaClient(mockdata, 0)
 	repo := client.RunGogetaClient()
 
 	if repo.SourceLocation != mockPath {
@@ -176,19 +182,7 @@ func TestGogetaClientClonesRepoIfMessageExists(t *testing.T) {
 
 func TestGogetaClientReturnsNilIfMessagesAreEmpty(t *testing.T) {
 	mockdata := `{}`
-	mockMessages := testutils.StubbedQueueMessage(mockdata)
-	client := &Gogeta{}
-	mockLog := &MockLogger{}
-	mockSCM := &MockSCM{}
-
-	client.Log = mockLog
-	client.SCM = mockSCM
-
-	client.Queue = &queuesystem.AmazonQueue{
-		Client: testutils.MockedAmazonClient{Response: mockMessages.Resp},
-		URL:    "mockUrl_%d",
-	}
-
+	client := mockGogetaClient(mockdata, 0)
 	repo := client.RunGogetaClient()
 
 	if repo.SourceLocation != "" {
@@ -207,45 +201,14 @@ func TestGogetaSendCorrectJSONMessageToGamebuildr(t *testing.T) {
 	mockMessage := "Send Mock Message"
 	mockdata := `{
 		"Type" : "Notification",
-		"MessageId" : "5481de82-a256-5ebc-a972-8fd4b77f5775",
-		"TopicArn" : "arn:aws:sns:eu-west-1:452978454880:gogeta_message",
-		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}",
-		"Timestamp" : "mock",
-		"SignatureVersion" : "1",
-		"Signature" : "123435",
-		"SigningCertURL" : "signing_cert",
-		"UnsubscribeURL" : "url_unsub"
+		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}"
 	}`
-	mockMessages := testutils.StubbedQueueMessage(mockdata)
-	client := &Gogeta{}
-	mockLog := &MockLogger{}
-	mockSCM := &MockSCM{}
-	mockstore := new(storehouse.Compressed)
-	mockCompression := MockCompression{}
-	mockStorage := MockStorage{}
-	mockPublisher := MockPublisher{}
+	client := mockGogetaClient(mockdata, 0)
+	client.queueMessages()
+	client.sendGamebuildrMessage(mockMessage, 1)
 
-	mockstore.Compression = &mockCompression
-	mockstore.StorageSystem = &mockStorage
-
-	client.Log = mockLog
-	client.SCM = mockSCM
-	client.Storage = mockstore
-	client.Publisher = &mockPublisher
-
-	client.Queue = &queuesystem.AmazonQueue{
-		Client: testutils.MockedAmazonClient{
-			Response:       mockMessages.Resp,
-			DeleteResponse: mockMessages.DeleteRsp,
-		},
-		URL: "mockUrl_%d",
-	}
-
-	client.RunGogetaClient()
-	client.sendDashboardMessage(mockMessage, 1)
-
-	if !mockPublisher.SendJSONCalled {
-		t.Errorf("Expected function publisher.SendJSON to be called")
+	if mockPublisher.SendJSONCallCount != 1 {
+		t.Errorf("Expected function publisher.SendJSON to be called once, called %v", mockPublisher.SendJSONCallCount)
 	}
 	if mockPublisher.MockMessage.Type != buildrMessage {
 		t.Errorf("Expected message.Type to equal %v, got %v", buildrMessage, mockPublisher.MockMessage.Type)
@@ -258,5 +221,19 @@ func TestGogetaSendCorrectJSONMessageToGamebuildr(t *testing.T) {
 	}
 	if mockPublisher.MockMessage.Order != 1 {
 		t.Errorf("Expected order to equal %v, but got %v", 1, mockPublisher.MockMessage.Order)
+	}
+}
+
+func TestGogetaSendsErrorMessagesWhenRepoTooLarge(t *testing.T) {
+	expectedErr := "Building project failed: Mock Size Limit Reached"
+	mockdata := `{
+		"Type" : "Notification",
+		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}"
+	}`
+	client := mockGogetaClient(mockdata, 4000000)
+	client.RunGogetaClient()
+
+	if mockPublisher.MockMessage.Message != expectedErr {
+		t.Errorf("Expected error message %v but got %v", expectedErr, mockPublisher.MockMessage.Message)
 	}
 }

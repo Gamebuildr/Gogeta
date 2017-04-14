@@ -122,7 +122,9 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	if client.SCM == nil {
 		return &repo
 	}
+	downloadMessage := fmt.Sprintf("Getting project data from %v", client.SCM)
 
+	client.sendGamebuildrMessage(downloadMessage, 0)
 	client.downloadSource(&repo)
 	if repo.SourceLocation == "" {
 		return &repo
@@ -133,6 +135,8 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 		client.Log.Error(err.Error())
 		return &repo
 	}
+	archiveMessage := fmt.Sprintf("Archiving project data")
+	client.sendGamebuildrMessage(archiveMessage, 2)
 
 	client.archiveRepo(&repo)
 	client.notifyMrRobot(&repo)
@@ -158,7 +162,7 @@ func (client *Gogeta) setVersionControl() {
 		client.SCM = scm
 		return
 	default:
-		client.Log.Info("SCM Type not found: " + dataType)
+		client.Log.Error("SCM Type not found: " + dataType)
 		return
 	}
 }
@@ -176,7 +180,9 @@ func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
 	repo.SourceOrigin = origin
 
 	if err := client.SCM.AddSource(repo); err != nil {
-		client.Log.Error(err.Error())
+		scmError := fmt.Sprintf("Building project failed: %v", err.Error())
+		client.sendGamebuildrMessage(scmError, 1)
+		client.Log.Error(scmError)
 	}
 }
 
@@ -220,7 +226,7 @@ func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) {
 	client.Publisher.SendJSON(&notification)
 }
 
-func (client *Gogeta) sendDashboardMessage(messageInfo string, order int) {
+func (client *Gogeta) sendGamebuildrMessage(messageInfo string, order int) {
 	data := client.data[0]
 
 	message := gamebuildrMessage{

@@ -7,6 +7,8 @@ import (
 	"path"
 	"strings"
 
+	"errors"
+
 	"github.com/Gamebuildr/Gogeta/pkg/config"
 	"github.com/Gamebuildr/Gogeta/pkg/publisher"
 	"github.com/Gamebuildr/Gogeta/pkg/queuesystem"
@@ -54,6 +56,7 @@ const logFileName string = "gogeta_client_"
 
 // Supported SCM types
 const git string = "GIT"
+const github string = "GITHUB"
 
 // Start initializes a new gogeta client
 func (client *Gogeta) Start() {
@@ -115,17 +118,26 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	client.queueMessages()
 
 	if len(client.data) <= 0 {
+		noQueueData := fmt.Sprintf("No queue message data received from %v", os.Getenv(config.QueueURL))
+		client.Log.Info(noQueueData)
 		return &repo
 	}
 
 	client.setVersionControl()
 	if client.SCM == nil {
+		noSCM := fmt.Sprintf("No SCM could be found for %v", client.data[0].RepoType)
+		client.Log.Info(noSCM)
 		return &repo
 	}
-	downloadMessage := fmt.Sprintf("Getting project data from %v", client.SCM)
+	downloadMessage := fmt.Sprintf("Getting %v source for build ID %v", client.data[0].RepoType, client.data[0].ID)
+	client.Log.Info(downloadMessage)
 
 	client.sendGamebuildrMessage(downloadMessage, 0)
-	client.downloadSource(&repo)
+	if err := client.downloadSource(&repo); err != nil {
+		client.sendGamebuildrMessage(err.Error(), 1)
+		client.Log.Error(err.Error())
+		return &repo
+	}
 	if repo.SourceLocation == "" {
 		return &repo
 	}
@@ -135,8 +147,9 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 		client.Log.Error(err.Error())
 		return &repo
 	}
-	archiveMessage := fmt.Sprintf("Archiving project data")
+	archiveMessage := fmt.Sprintf("Adding project source code to archive")
 	client.sendGamebuildrMessage(archiveMessage, 2)
+	client.Log.Info(archiveMessage)
 
 	client.archiveRepo(&repo)
 	client.notifyMrRobot(&repo)
@@ -155,6 +168,12 @@ func (client *Gogeta) queueMessages() {
 func (client *Gogeta) setVersionControl() {
 	dataType := strings.ToUpper(client.data[0].RepoType)
 	switch dataType {
+	case github:
+		scm := &sourcesystem.SystemSCM{}
+		scm.VersionControl = &sourcesystem.GitVersionControl{}
+		scm.Log = client.Log
+		client.SCM = scm
+		return
 	case git:
 		scm := &sourcesystem.SystemSCM{}
 		scm.VersionControl = &sourcesystem.GitVersionControl{}
@@ -167,13 +186,13 @@ func (client *Gogeta) setVersionControl() {
 	}
 }
 
-func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
+func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) error {
 	message := client.data[0]
 	project := message.Project
 	origin := message.RepoURL
 
 	if project == "" || origin == "" {
-		return
+		return errors.New("No data found to download source")
 	}
 
 	repo.ProjectName = project
@@ -181,9 +200,9 @@ func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) {
 
 	if err := client.SCM.AddSource(repo); err != nil {
 		scmError := fmt.Sprintf("Building project failed: %v", err.Error())
-		client.sendGamebuildrMessage(scmError, 1)
-		client.Log.Error(scmError)
+		return errors.New(scmError)
 	}
+	return nil
 }
 
 func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) {
@@ -223,6 +242,8 @@ func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) {
 		Subject:  "Buildr Request",
 		Endpoint: os.Getenv(config.MrrobotNotifications),
 	}
+	infoMsg := fmt.Sprintf("Sending message %v, to build system", message)
+	client.Log.Info(infoMsg)
 	client.Publisher.SendJSON(&notification)
 }
 

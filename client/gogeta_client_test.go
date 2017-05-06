@@ -79,6 +79,7 @@ func (scm *MockSCM) UpdateSource(repo *sourcesystem.SourceRepository) error {
 type MockPublisher struct {
 	SendJSONCallCount int
 	MockMessage       gamebuildrMessage
+	MockResponse      buildResponse
 }
 
 var mockPublisher = MockPublisher{}
@@ -93,11 +94,19 @@ func (service *MockPublisher) SendJSON(msg *publisher.Message) {
 	if err := json.Unmarshal(msg.JSON, &service.MockMessage); err != nil {
 		fmt.Printf(err.Error())
 	}
+	if err := json.Unmarshal(msg.JSON, &service.MockResponse); err != nil {
+		fmt.Printf(err.Error())
+	}
 	fmt.Printf(msg.Message)
 	service.SendJSONCallCount++
 }
 
 var mockedAmazonClient testutils.MockedAmazonClient
+
+const mockdata string = `{
+		"Type" : "Notification",
+		"Message" : "{\"id\":\"12\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}"
+	}`
 
 func mockGogetaClient(mockdata string, reposize int64) *Gogeta {
 	// Reset Publisher each client setup
@@ -158,10 +167,6 @@ func TestGogetaClientLogsErrors(t *testing.T) {
 
 func TestGogetaClientClonesRepoIfMessageExists(t *testing.T) {
 	mockPath := "/mock/repo/location"
-	mockdata := `{
-		"Type" : "Notification",
-		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}"
-	}`
 	client := mockGogetaClient(mockdata, 0)
 	repo := client.RunGogetaClient()
 
@@ -204,13 +209,9 @@ func TestGogetaClientReturnsNilIfMessagesAreEmpty(t *testing.T) {
 
 func TestGogetaSendCorrectJSONMessageToGamebuildr(t *testing.T) {
 	mockMessage := "Send Mock Message"
-	mockdata := `{
-		"Type" : "Notification",
-		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}"
-	}`
 	client := mockGogetaClient(mockdata, 0)
 	client.queueMessages()
-	client.sendGamebuildrMessage(mockMessage, 1)
+	client.sendGamebuildrMessage(mockMessage)
 
 	if mockPublisher.SendJSONCallCount != 1 {
 		t.Errorf("Expected function publisher.SendJSON to be called once, called %v", mockPublisher.SendJSONCallCount)
@@ -218,27 +219,40 @@ func TestGogetaSendCorrectJSONMessageToGamebuildr(t *testing.T) {
 	if mockPublisher.MockMessage.Type != buildrMessage {
 		t.Errorf("Expected message.Type to equal %v, got %v", buildrMessage, mockPublisher.MockMessage.Type)
 	}
-	if mockPublisher.MockMessage.BuildID != "58dc12e993179a0012a592dc" {
+	if mockPublisher.MockMessage.BuildID != "12" {
 		t.Errorf("Expected buildid to equal %v, got %v", "58dc12e993179a0012a592dc", mockPublisher.MockMessage.BuildID)
 	}
 	if mockPublisher.MockMessage.Message != mockMessage {
 		t.Errorf("Expected message to equal %v, but got %v", mockMessage, mockPublisher.MockMessage.Message)
 	}
-	if mockPublisher.MockMessage.Order != 1 {
-		t.Errorf("Expected order to equal %v, but got %v", 1, mockPublisher.MockMessage.Order)
+}
+
+func TestGogetaSendsErrorMessageWhenSCMIsIncorrect(t *testing.T) {
+	expectedErr := "SCM of type MOCK could not be found"
+	client := mockGogetaClient(mockdata, 100)
+	client.SCM = nil
+	client.RunGogetaClient()
+
+	if mockPublisher.MockResponse.Message != expectedErr {
+		t.Errorf("Expected error message %v but got %v", expectedErr, mockPublisher.MockResponse.Message)
+	}
+	if mockPublisher.MockResponse.BuildID != "12" {
+		t.Errorf("Expected buildid %v but got %v", "12", mockPublisher.MockResponse.BuildID)
+	}
+	if mockedAmazonClient.DeleteCallCount != 1 {
+		t.Errorf("Expected queue delete message to be called once, called %v", mockedAmazonClient.DeleteCallCount)
 	}
 }
 
 func TestGogetaSendsErrorMessagesWhenRepoTooLarge(t *testing.T) {
 	expectedErr := "Cloning failed with the following error: Mock Size Limit Reached"
-	mockdata := `{
-		"Type" : "Notification",
-		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}"
-	}`
 	client := mockGogetaClient(mockdata, 4000000)
 	client.RunGogetaClient()
 
-	if mockPublisher.MockMessage.Message != expectedErr {
-		t.Errorf("Expected error message %v but got %v", expectedErr, mockPublisher.MockMessage.Message)
+	if mockPublisher.MockResponse.Message != expectedErr {
+		t.Errorf("Expected error message %v but got %v", expectedErr, mockPublisher.MockResponse.Message)
+	}
+	if mockedAmazonClient.DeleteCallCount != 1 {
+		t.Errorf("Expected queue delete message to be called once, called %v", mockedAmazonClient.DeleteCallCount)
 	}
 }

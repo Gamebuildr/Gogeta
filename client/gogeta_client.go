@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"errors"
 
@@ -48,6 +49,17 @@ type gamebuildrMessage struct {
 	Message string `json:"message"`
 	Order   int    `json:"order"`
 	BuildID string `json:"buildid"`
+}
+
+type buildResponse struct {
+	Success   bool   `json:"success"`
+	LogPath   string `json:"logpath"`
+	BuildrID  string `json:"buildrid"`
+	BuildID   string `json:"buildid"`
+	Type      string `json:"type"`
+	Message   string `json:"message"`
+	BuildPath string `json:"buildpath"`
+	End       int64  `json:"end"`
 }
 
 const buildrMessage string = "BUILDR_MESSAGE"
@@ -124,10 +136,8 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 
 	client.broadcastProgress("Source code download request received")
 
-	client.setVersionControl()
-	if client.SCM == nil {
-		scmErrMessage := fmt.Sprintf("Could not find SCM of type %v", client.data[0].RepoType)
-		client.broadcastFailure(scmErrMessage, "client.SCM value is nil")
+	if err := client.setVersionControl(); err != nil {
+		client.broadcastFailure(err.Error(), "client.SCM value is nil")
 		return &repo
 	}
 
@@ -152,6 +162,7 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	}
 
 	client.broadcastProgress("Notifying build system")
+
 	if err := client.notifyMrRobot(&repo); err != nil {
 		client.broadcastFailure("Notifying build system failed", err.Error())
 		return &repo
@@ -165,41 +176,60 @@ func (client *Gogeta) broadcastProgress(info string) {
 	logInfo := fmt.Sprintf("Build ID: %v, Update: %v", client.data[0].ID, info)
 
 	client.Log.Info(logInfo)
-	client.sendGamebuildrMessage(info, 0)
+	client.sendGamebuildrMessage(info)
 }
 
 func (client *Gogeta) broadcastFailure(info string, err string) {
-	logErr := fmt.Sprintf("Build ID: %v, Data: %v, Update: %v, Error: %v", client.data[0].ID, client.data, info, err)
+	logErr := fmt.Sprintf("Build ID: %v, Data: %v, Update: %v, Error: %v", client.data[0].ID, client.data[0], info, err)
 
 	client.Log.Error(logErr)
 	client.sendBuildFailedMessage(info)
 }
 
-func (client *Gogeta) sendGamebuildrMessage(messageInfo string, order int) {
+func (client *Gogeta) sendGamebuildrMessage(messageInfo string) {
 	data := client.data[0]
-
-	message := gamebuildrMessage{
+	reponse := gamebuildrMessage{
 		Type:    buildrMessage,
 		Message: messageInfo,
-		Order:   order,
 		BuildID: data.ID,
 	}
-	jsonMessage, err := json.Marshal(message)
+
+	jsonMessage, err := json.Marshal(reponse)
 	if err != nil {
 		client.Log.Error(err.Error())
 		return
 	}
 	notification := publisher.Message{
 		JSON:     jsonMessage,
-		Subject:  "Buildr Message",
+		Subject:  buildrMessage,
 		Endpoint: os.Getenv(config.GamebuildrNotifications),
 	}
 	client.Publisher.SendJSON(&notification)
 }
 
 func (client *Gogeta) sendBuildFailedMessage(failMessage string) {
+	data := client.data[0]
+	response := buildResponse{
+		Success:  false,
+		BuildrID: data.BuildrID,
+		BuildID:  data.ID,
+		Type:     buildrMessage,
+		Message:  failMessage,
+		End:      getBuildEndTime(),
+	}
+
 	client.deleteMessage()
-	client.sendGamebuildrMessage(failMessage, 0)
+	jsonMessage, err := json.Marshal(response)
+	if err != nil {
+		client.Log.Error(err.Error())
+		return
+	}
+	notification := publisher.Message{
+		JSON:     jsonMessage,
+		Subject:  buildrMessage,
+		Endpoint: os.Getenv(config.GamebuildrNotifications),
+	}
+	client.Publisher.SendJSON(&notification)
 }
 
 func (client *Gogeta) queueMessages() {
@@ -217,7 +247,11 @@ func (client *Gogeta) deleteMessage() {
 	}
 }
 
-func (client *Gogeta) setVersionControl() {
+func (client *Gogeta) setVersionControl() error {
+	if client.SCM != nil {
+		return nil
+	}
+
 	dataType := strings.ToUpper(client.data[0].RepoType)
 	switch dataType {
 	case github:
@@ -225,16 +259,16 @@ func (client *Gogeta) setVersionControl() {
 		scm.VersionControl = &sourcesystem.GitVersionControl{}
 		scm.Log = client.Log
 		client.SCM = scm
-		return
+		return nil
 	case git:
 		scm := &sourcesystem.SystemSCM{}
 		scm.VersionControl = &sourcesystem.GitVersionControl{}
 		scm.Log = client.Log
 		client.SCM = scm
-		return
+		return nil
 	default:
-		client.Log.Error("SCM Type not found: " + dataType)
-		return
+		err := fmt.Sprintf("SCM of type %v could not be found", dataType)
+		return errors.New(err)
 	}
 }
 
@@ -295,4 +329,8 @@ func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) error {
 	}
 	client.Publisher.SendJSON(&notification)
 	return nil
+}
+
+func getBuildEndTime() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
 }

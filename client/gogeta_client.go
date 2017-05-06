@@ -141,12 +141,8 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	if repo.SourceLocation == "" {
 		return &repo
 	}
+	client.deleteMessage()
 
-	_, err := client.Queue.DeleteMessageFromQueue(client.data[0].MessageReceipt)
-	if err != nil {
-		client.Log.Error(err.Error())
-		return &repo
-	}
 	archiveMessage := fmt.Sprintf("Adding project source code to archive")
 	client.sendGamebuildrMessage(archiveMessage, 2)
 	client.Log.Info(archiveMessage)
@@ -157,12 +153,41 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 	return &repo
 }
 
+func (client *Gogeta) sendGamebuildrMessage(messageInfo string, order int) {
+	data := client.data[0]
+
+	message := gamebuildrMessage{
+		Type:    buildrMessage,
+		Message: messageInfo,
+		Order:   order,
+		BuildID: data.ID,
+	}
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		client.Log.Error(err.Error())
+		return
+	}
+	notification := publisher.Message{
+		JSON:     jsonMessage,
+		Subject:  "Buildr Message",
+		Endpoint: os.Getenv(config.GamebuildrNotifications),
+	}
+	client.Publisher.SendJSON(&notification)
+}
+
 func (client *Gogeta) queueMessages() {
 	messages, err := client.Queue.GetQueueMessages()
 	if err != nil {
 		client.Log.Error(err.Error())
 	}
 	client.data = messages
+}
+
+func (client *Gogeta) deleteMessage() {
+	_, err := client.Queue.DeleteMessageFromQueue(client.data[0].MessageReceipt)
+	if err != nil {
+		client.Log.Error(err.Error())
+	}
 }
 
 func (client *Gogeta) setVersionControl() {
@@ -244,27 +269,5 @@ func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) {
 	}
 	infoMsg := fmt.Sprintf("Sending message %v, to build system", message)
 	client.Log.Info(infoMsg)
-	client.Publisher.SendJSON(&notification)
-}
-
-func (client *Gogeta) sendGamebuildrMessage(messageInfo string, order int) {
-	data := client.data[0]
-
-	message := gamebuildrMessage{
-		Type:    buildrMessage,
-		Message: messageInfo,
-		Order:   order,
-		BuildID: data.ID,
-	}
-	jsonMessage, err := json.Marshal(message)
-	if err != nil {
-		client.Log.Error(err.Error())
-		return
-	}
-	notification := publisher.Message{
-		JSON:     jsonMessage,
-		Subject:  "Buildr Message",
-		Endpoint: os.Getenv(config.GamebuildrNotifications),
-	}
 	client.Publisher.SendJSON(&notification)
 }

@@ -97,10 +97,16 @@ func (service *MockPublisher) SendJSON(msg *publisher.Message) {
 	service.SendJSONCallCount++
 }
 
+var mockedAmazonClient testutils.MockedAmazonClient
+
 func mockGogetaClient(mockdata string, reposize int64) *Gogeta {
 	// Reset Publisher each client setup
 	mockPublisher = MockPublisher{}
 	mockMessages := testutils.StubbedQueueMessage(mockdata)
+	mockedAmazonClient = testutils.MockedAmazonClient{
+		Response:       mockMessages.Resp,
+		DeleteResponse: mockMessages.DeleteRsp,
+	}
 	client := &Gogeta{}
 	mockLog := &MockLogger{}
 	mockSCM := &MockSCM{RepoSize: reposize}
@@ -115,13 +121,9 @@ func mockGogetaClient(mockdata string, reposize int64) *Gogeta {
 	client.SCM = mockSCM
 	client.Storage = mockstore
 	client.Publisher = &mockPublisher
-
 	client.Queue = &queuesystem.AmazonQueue{
-		Client: testutils.MockedAmazonClient{
-			Response:       mockMessages.Resp,
-			DeleteResponse: mockMessages.DeleteRsp,
-		},
-		URL: "mockUrl_%d",
+		Client: &mockedAmazonClient,
+		URL:    "mockUrl_%d",
 	}
 	return client
 }
@@ -177,6 +179,9 @@ func TestGogetaClientClonesRepoIfMessageExists(t *testing.T) {
 	}
 	if repo.ProjectName != "Bloom" {
 		t.Errorf("Expected: %v, got: %v", "Bloom", repo.ProjectName)
+	}
+	if mockedAmazonClient.DeleteCallCount != 1 {
+		t.Errorf("Expected queue delete to be called once, was called %v", mockedAmazonClient.DeleteCallCount)
 	}
 }
 

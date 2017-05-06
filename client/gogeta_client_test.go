@@ -230,7 +230,7 @@ func TestGogetaSendCorrectJSONMessageToGamebuildr(t *testing.T) {
 }
 
 func TestGogetaSendsErrorMessagesWhenRepoTooLarge(t *testing.T) {
-	expectedErr := "Building project failed: Mock Size Limit Reached"
+	expectedErr := "Cloning failed with the following error: Mock Size Limit Reached"
 	mockdata := `{
 		"Type" : "Notification",
 		"Message" : "{\"id\":\"58dc12e993179a0012a592dc\",\"project\":\"Bloom\",\"enginename\":\"Godot\",\"engineversion\":\"2.1\",\"engineplatform\":\"PC\",\"repotype\":\"Mock\",\"repourl\":\"https://github.com/dirty-casuals/Bloom.git\",\"buildowner\":\"herman.rogers@gmail.com\"}"

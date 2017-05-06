@@ -21,7 +21,7 @@ func MockGogetaProcess(app *client.Gogeta) {
 	}`
 	mockMessages := testutils.StubbedQueueMessage(mockdata)
 	app.Queue = &queuesystem.AmazonQueue{
-		Client: testutils.MockedAmazonClient{Response: mockMessages.Resp},
+		Client: &testutils.MockedAmazonClient{Response: mockMessages.Resp},
 		URL:    "mockUrl_%d",
 	}
 }

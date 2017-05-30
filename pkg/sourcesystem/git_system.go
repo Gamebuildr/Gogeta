@@ -1,6 +1,7 @@
 package sourcesystem
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -22,11 +23,16 @@ func (scm *GitVersionControl) CloneSource(repo *SourceRepository, location strin
 	cmd := exec.Command("git", "clone", "--depth", "2", repo.SourceOrigin, location)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
+	cmdOutput := &bytes.Buffer{}
+	cmd.Stderr = cmdOutput
+
 	scm.command = cmd
 	if err := cmd.Start(); err != nil {
 		return err
 	}
 	if err := cmd.Wait(); err != nil {
+		// println(err.Error())
+		print(string(cmdOutput.Bytes()))
 		return err
 	}
 	if err := createGitCredentials(location); err != nil {

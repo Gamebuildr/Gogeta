@@ -3,9 +3,6 @@ package config
 // Region is the world region messages are coming from
 const Region string = "REGION"
 
-// QueueURL is the URL endpoint to recieve messages
-const QueueURL string = "QUEUE_URL"
-
 // MrrobotNotifications is the URL endpoint to send MrRobot messages
 const MrrobotNotifications string = "MRROBOT_NOTIFICATIONS"
 
@@ -27,3 +24,6 @@ const GoEnv string = "GO_ENV"
 
 // LogEndpoint is the endpoint for sending log data
 const LogEndpoint string = "PAPERTRAIL_ENDPOINT"
+
+// LogPath is the path for storing log data in development environments
+const LogPath string = "GOGETA_LOG_PATH"

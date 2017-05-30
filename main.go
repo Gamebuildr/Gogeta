@@ -9,12 +9,20 @@ import (
 )
 
 func main() {
-	app := client.Gogeta{}
-	app.Start()
-	// Use mock gogeta process to read off amazon queues in
-	// development without hitting API
-	if os.Getenv(config.GoEnv) == "development" {
-		devutils.MockGogetaProcess(&app)
+	var messageString string
+	devMode := os.Getenv(config.GoEnv) == "development"
+	if devMode {
+		messageString = devutils.GetMessage()
+	} else {
+		if len(os.Args) == 1 {
+			println("Not enough arguments")
+			return
+		}
+		messageString = os.Args[1]
 	}
-	app.RunGogetaClient()
+
+	app := client.Gogeta{}
+	app.Start(devMode)
+
+	app.RunGogetaClient(messageString)
 }

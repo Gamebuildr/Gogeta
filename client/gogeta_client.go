@@ -12,26 +12,35 @@ import (
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
 	"github.com/Gamebuildr/Gogeta/pkg/publisher"
-	"github.com/Gamebuildr/Gogeta/pkg/queuesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
 	"github.com/Gamebuildr/gamebuildr-compressor/pkg/compressor"
 	"github.com/Gamebuildr/gamebuildr-credentials/pkg/credentials"
 	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/logger"
 	"github.com/Gamebuildr/gamebuildr-lumberjack/pkg/papertrail"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
 // Gogeta is the source control manager implementation
 type Gogeta struct {
-	Queue     queuesystem.Messages
 	Log       logger.Log
 	SCM       sourcesystem.SourceSystem
 	Storage   storehouse.StoreHouse
 	Publisher publisher.Publish
-	data      []queuesystem.QueueMessage
+	data      gogetaMessage
+}
+
+type gogetaMessage struct {
+	ArchivePath    string `json:"archivepath"`
+	ID             string `json:"id"`
+	Project        string `json:"project"`
+	EngineName     string `json:"enginename"`
+	EngineVersion  string `json:"engineversion"`
+	EnginePlatform string `json:"engineplatform"`
+	BuildrID       string `json:"buildrid"`
+	RepoType       string `json:"repotype"`
+	RepoURL        string `json:"repourl"`
+	BuildOwner     string `json:"buildowner"`
+	MessageReceipt string
 }
 
 type mrRobotMessage struct {
@@ -71,14 +80,22 @@ const git string = "GIT"
 const github string = "GITHUB"
 
 // Start initializes a new gogeta client
-func (client *Gogeta) Start() {
+func (client *Gogeta) Start(devMode bool) {
 	// logging system
 	log := logger.SystemLogger{}
-	saveSystem := &papertrail.PapertrailLogSave{
-		App: "Gogeta",
-		URL: os.Getenv(config.LogEndpoint),
+	if devMode {
+		fileLogger := logger.FileLogSave{
+			LogFileName: logFileName,
+			LogFileDir:  os.Getenv(config.LogPath),
+		}
+		log.LogSave = fileLogger
+	} else {
+		saveSystem := &papertrail.PapertrailLogSave{
+			App: "Gogeta",
+			URL: os.Getenv(config.LogEndpoint),
+		}
+		log.LogSave = saveSystem
 	}
-	log.LogSave = saveSystem
 
 	// storage system
 	store := &storehouse.Compressed{}
@@ -88,19 +105,6 @@ func (client *Gogeta) Start() {
 	}
 	store.Compression = zipCompress
 	store.StorageSystem = cloudStorage
-
-	// queue system
-	awsSession, err := session.NewSession()
-	if err != nil {
-		fmt.Printf(err.Error())
-	}
-	awsSession.Config.Region = aws.String(os.Getenv(config.Region))
-
-	sess := session.Must(awsSession, nil)
-	amazonQueue := &queuesystem.AmazonQueue{
-		Client: sqs.New(sess),
-		URL:    os.Getenv(config.QueueURL),
-	}
 
 	// publisher system
 	amazonSNS := publisher.AmazonNotification{}
@@ -113,7 +117,6 @@ func (client *Gogeta) Start() {
 	// Setup client
 	client.Log = log
 	client.Storage = store
-	client.Queue = amazonQueue
 	client.Publisher = &notifications
 
 	// Generate gcloud service .json file
@@ -125,14 +128,24 @@ func (client *Gogeta) Start() {
 }
 
 // RunGogetaClient will run the complete gogeta scm system
-func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
+func (client *Gogeta) RunGogetaClient(messageString string) *sourcesystem.SourceRepository {
 	repo := sourcesystem.SourceRepository{}
-	client.queueMessages()
 
-	if len(client.data) <= 0 {
-		client.Log.Info("No data received from queue to clone project")
+	if &messageString == nil || messageString == "" {
+		client.Log.Info("No data received to clone project")
+		client.broadcastProgress("No data received to clone project")
 		return &repo
 	}
+
+	var message gogetaMessage
+	if err := json.Unmarshal([]byte(messageString), &message); err != nil {
+		client.Log.Error("Failed to parse message data")
+		return &repo
+	}
+
+	client.data = message
+
+	client.Log.Info(fmt.Sprintf("[%v] received message with data: %v", message.ID, messageString))
 
 	client.broadcastProgress("Source code download request received")
 
@@ -167,27 +180,26 @@ func (client *Gogeta) RunGogetaClient() *sourcesystem.SourceRepository {
 		client.broadcastFailure("Notifying build system failed", err.Error())
 		return &repo
 	}
-	client.deleteMessage()
 
 	return &repo
 }
 
 func (client *Gogeta) broadcastProgress(info string) {
-	logInfo := fmt.Sprintf("Build ID: %v, Update: %v", client.data[0].ID, info)
+	logInfo := fmt.Sprintf("Build ID: %v, Update: %v", client.data.ID, info)
 
 	client.Log.Info(logInfo)
 	client.sendGamebuildrMessage(info)
 }
 
 func (client *Gogeta) broadcastFailure(info string, err string) {
-	logErr := fmt.Sprintf("Build ID: %v, Data: %v, Update: %v, Error: %v", client.data[0].ID, client.data[0], info, err)
+	logErr := fmt.Sprintf("Build ID: %v, Data: %v, Update: %v, Error: %v", client.data.ID, client.data, info, err)
 
 	client.Log.Error(logErr)
 	client.sendBuildFailedMessage(info)
 }
 
 func (client *Gogeta) sendGamebuildrMessage(messageInfo string) {
-	data := client.data[0]
+	data := client.data
 	reponse := gamebuildrMessage{
 		Type:    buildrMessage,
 		Message: messageInfo,
@@ -208,7 +220,7 @@ func (client *Gogeta) sendGamebuildrMessage(messageInfo string) {
 }
 
 func (client *Gogeta) sendBuildFailedMessage(failMessage string) {
-	data := client.data[0]
+	data := client.data
 	response := buildResponse{
 		Success:  false,
 		BuildrID: data.BuildrID,
@@ -218,7 +230,6 @@ func (client *Gogeta) sendBuildFailedMessage(failMessage string) {
 		End:      getBuildEndTime(),
 	}
 
-	client.deleteMessage()
 	jsonMessage, err := json.Marshal(response)
 	if err != nil {
 		client.Log.Error(err.Error())
@@ -232,48 +243,29 @@ func (client *Gogeta) sendBuildFailedMessage(failMessage string) {
 	client.Publisher.SendJSON(&notification)
 }
 
-func (client *Gogeta) queueMessages() {
-	messages, err := client.Queue.GetQueueMessages()
-	if err != nil {
-		client.Log.Error(err.Error())
-	}
-	client.data = messages
-}
-
-func (client *Gogeta) deleteMessage() {
-	_, err := client.Queue.DeleteMessageFromQueue(client.data[0].MessageReceipt)
-	if err != nil {
-		client.Log.Error(err.Error())
-	}
-}
-
 func (client *Gogeta) setVersionControl() error {
 	if client.SCM != nil {
 		return nil
 	}
 
-	dataType := strings.ToUpper(client.data[0].RepoType)
+	dataType := strings.ToUpper(client.data.RepoType)
+	scm := &sourcesystem.SystemSCM{}
+	scm.Log = client.Log
 	switch dataType {
 	case github:
-		scm := &sourcesystem.SystemSCM{}
 		scm.VersionControl = &sourcesystem.GitVersionControl{}
-		scm.Log = client.Log
-		client.SCM = scm
-		return nil
 	case git:
-		scm := &sourcesystem.SystemSCM{}
 		scm.VersionControl = &sourcesystem.GitVersionControl{}
-		scm.Log = client.Log
-		client.SCM = scm
-		return nil
 	default:
 		err := fmt.Sprintf("SCM of type %v could not be found", dataType)
 		return errors.New(err)
 	}
+	client.SCM = scm
+	return nil
 }
 
 func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) error {
-	message := client.data[0]
+	message := client.data
 	project := message.Project
 	origin := message.RepoURL
 
@@ -293,7 +285,7 @@ func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) error 
 func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) error {
 	fileName := repo.ProjectName + ".zip"
 	archive := path.Join(os.Getenv("GOPATH"), "repos", fileName)
-	archiveDir := client.data[0].ID
+	archiveDir := client.data.ID
 	archivePath := path.Join(archiveDir, fileName)
 	storageData := storehouse.StorageData{
 		Source:    repo.SourceLocation,
@@ -303,12 +295,12 @@ func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) error {
 	if err := client.Storage.StoreFiles(&storageData); err != nil {
 		return err
 	}
-	client.data[0].ArchivePath = archivePath
+	client.data.ArchivePath = archivePath
 	return nil
 }
 
 func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) error {
-	data := client.data[0]
+	data := client.data
 	message := mrRobotMessage{
 		ArchivePath:    data.ArchivePath,
 		BuildID:        data.ID,

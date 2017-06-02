@@ -138,14 +138,14 @@ func (client *Gogeta) RunGogetaClient(messageString string) *sourcesystem.Source
 	}
 
 	var message gogetaMessage
+
+	client.Log.Info(fmt.Sprintf("received message with data: %v", messageString))
 	if err := json.Unmarshal([]byte(messageString), &message); err != nil {
 		client.Log.Error("Failed to parse message data")
 		return &repo
 	}
 
 	client.data = message
-
-	client.Log.Info(fmt.Sprintf("[%v] received message with data: %v", message.ID, messageString))
 
 	client.broadcastProgress("Source code download request received")
 

@@ -27,3 +27,6 @@ const LogEndpoint string = "PAPERTRAIL_ENDPOINT"
 
 // LogPath is the path for storing log data in development environments
 const LogPath string = "GOGETA_LOG_PATH"
+
+// MessageString is the string representation of the message to use
+const MessageString string = "MESSAGE_STRING"

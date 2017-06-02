@@ -14,11 +14,11 @@ func main() {
 	if devMode {
 		messageString = devutils.GetMessage()
 	} else {
-		if len(os.Args) == 1 {
-			println("Not enough arguments")
+		messageString = os.Getenv(config.MessageString)
+		if &messageString == nil || messageString == "" {
+			println("No message supplied")
 			return
 		}
-		messageString = os.Args[1]
 	}
 
 	app := client.Gogeta{}

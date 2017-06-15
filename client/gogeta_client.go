@@ -26,7 +26,6 @@ type Gogeta struct {
 	SCM       sourcesystem.SourceSystem
 	Storage   storehouse.StoreHouse
 	Publisher publisher.Publish
-	data      gogetaMessage
 }
 
 type gogetaMessage struct {
@@ -133,7 +132,7 @@ func (client *Gogeta) RunGogetaClient(messageString string) *sourcesystem.Source
 
 	if &messageString == nil || messageString == "" {
 		client.Log.Info("No data received to clone project")
-		client.broadcastProgress("No data received to clone project")
+		client.broadcastProgress("No data received to clone project", "")
 		return &repo
 	}
 
@@ -145,65 +144,62 @@ func (client *Gogeta) RunGogetaClient(messageString string) *sourcesystem.Source
 		return &repo
 	}
 
-	client.data = message
+	client.broadcastProgress("Source code download request received", message.ID)
 
-	client.broadcastProgress("Source code download request received")
-
-	if err := client.setVersionControl(); err != nil {
-		client.broadcastFailure(err.Error(), "client.SCM value is nil")
+	if err := client.setVersionControl(message); err != nil {
+		client.broadcastFailure(err.Error(), "client.SCM value is nil", message)
 		return &repo
 	}
 
-	client.broadcastProgress("Downloading latest project source")
+	client.broadcastProgress("Downloading latest project source", message.ID)
 
-	if err := client.downloadSource(&repo); err != nil {
+	if err := client.downloadSource(&repo, message); err != nil {
 		cloneErr := fmt.Sprintf("Cloning failed with the following error: %v", err.Error())
-		client.broadcastFailure(cloneErr, err.Error())
+		client.broadcastFailure(cloneErr, err.Error(), message)
 		return &repo
 	}
 	if repo.SourceLocation == "" {
-		client.broadcastFailure("Cloned source location does not exist", "repo.SourceLocation is missing repo path")
+		client.broadcastFailure("Cloned source location does not exist", "repo.SourceLocation is missing repo path", message)
 		return &repo
 	}
 
-	client.broadcastProgress("Cloning project finished successfully")
-	client.broadcastProgress("Compressing and uploading project to storage system")
+	client.broadcastProgress("Cloning project finished successfully", message.ID)
+	client.broadcastProgress("Compressing and uploading project to storage system", message.ID)
 
-	if err := client.archiveRepo(&repo); err != nil {
-		client.broadcastFailure("Archiving source failed", err.Error())
+	if err := client.archiveRepo(&repo, &message); err != nil {
+		client.broadcastFailure("Archiving source failed", err.Error(), message)
 		return &repo
 	}
 
-	client.broadcastProgress("Notifying build system")
+	client.broadcastProgress("Notifying build system", message.ID)
 
-	if err := client.notifyMrRobot(&repo); err != nil {
-		client.broadcastFailure("Notifying build system failed", err.Error())
+	if err := client.notifyMrRobot(&repo, message); err != nil {
+		client.broadcastFailure("Notifying build system failed", err.Error(), message)
 		return &repo
 	}
 
 	return &repo
 }
 
-func (client *Gogeta) broadcastProgress(info string) {
-	logInfo := fmt.Sprintf("Build ID: %v, Update: %v", client.data.ID, info)
+func (client *Gogeta) broadcastProgress(info string, buildID string) {
+	logInfo := fmt.Sprintf("Build ID: %v, Update: %v", buildID, info)
 
 	client.Log.Info(logInfo)
-	client.sendGamebuildrMessage(info)
+	client.sendGamebuildrMessage(info, buildID)
 }
 
-func (client *Gogeta) broadcastFailure(info string, err string) {
-	logErr := fmt.Sprintf("Build ID: %v, Data: %v, Update: %v, Error: %v", client.data.ID, client.data, info, err)
+func (client *Gogeta) broadcastFailure(info string, err string, message gogetaMessage) {
+	logErr := fmt.Sprintf("Build ID: %v, Data: %v, Update: %v, Error: %v", message.ID, message, info, err)
 
 	client.Log.Error(logErr)
-	client.sendBuildFailedMessage(info)
+	client.sendBuildFailedMessage(info, message)
 }
 
-func (client *Gogeta) sendGamebuildrMessage(messageInfo string) {
-	data := client.data
+func (client *Gogeta) sendGamebuildrMessage(messageInfo string, buildID string) {
 	reponse := gamebuildrMessage{
 		Type:    buildrMessage,
 		Message: messageInfo,
-		BuildID: data.ID,
+		BuildID: buildID,
 	}
 
 	jsonMessage, err := json.Marshal(reponse)
@@ -219,12 +215,11 @@ func (client *Gogeta) sendGamebuildrMessage(messageInfo string) {
 	client.Publisher.SendJSON(&notification)
 }
 
-func (client *Gogeta) sendBuildFailedMessage(failMessage string) {
-	data := client.data
+func (client *Gogeta) sendBuildFailedMessage(failMessage string, message gogetaMessage) {
 	response := buildResponse{
 		Success:  false,
-		BuildrID: data.BuildrID,
-		BuildID:  data.ID,
+		BuildrID: message.BuildrID,
+		BuildID:  message.ID,
 		Type:     buildrMessage,
 		Message:  failMessage,
 		End:      getBuildEndTime(),
@@ -243,12 +238,12 @@ func (client *Gogeta) sendBuildFailedMessage(failMessage string) {
 	client.Publisher.SendJSON(&notification)
 }
 
-func (client *Gogeta) setVersionControl() error {
+func (client *Gogeta) setVersionControl(message gogetaMessage) error {
 	if client.SCM != nil {
 		return nil
 	}
 
-	dataType := strings.ToUpper(client.data.RepoType)
+	dataType := strings.ToUpper(message.RepoType)
 	scm := &sourcesystem.SystemSCM{}
 	scm.Log = client.Log
 	switch dataType {
@@ -264,8 +259,7 @@ func (client *Gogeta) setVersionControl() error {
 	return nil
 }
 
-func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) error {
-	message := client.data
+func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository, message gogetaMessage) error {
 	project := message.Project
 	origin := message.RepoURL
 
@@ -282,10 +276,10 @@ func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository) error 
 	return nil
 }
 
-func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) error {
+func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository, message *gogetaMessage) error {
 	fileName := repo.ProjectName + ".zip"
 	archive := path.Join(os.Getenv("GOPATH"), "repos", fileName)
-	archiveDir := client.data.ID
+	archiveDir := message.ID
 	archivePath := path.Join(archiveDir, fileName)
 	storageData := storehouse.StorageData{
 		Source:    repo.SourceLocation,
@@ -295,22 +289,21 @@ func (client *Gogeta) archiveRepo(repo *sourcesystem.SourceRepository) error {
 	if err := client.Storage.StoreFiles(&storageData); err != nil {
 		return err
 	}
-	client.data.ArchivePath = archivePath
+	message.ArchivePath = archivePath
 	return nil
 }
 
-func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository) error {
-	data := client.data
-	message := mrRobotMessage{
-		ArchivePath:    data.ArchivePath,
-		BuildID:        data.ID,
-		Project:        data.Project,
-		EngineName:     data.EngineName,
-		EngineVersion:  data.EngineVersion,
-		EnginePlatform: data.EnginePlatform,
-		BuildrID:       data.BuildrID,
+func (client *Gogeta) notifyMrRobot(repo *sourcesystem.SourceRepository, message gogetaMessage) error {
+	messageToSend := mrRobotMessage{
+		ArchivePath:    message.ArchivePath,
+		BuildID:        message.ID,
+		Project:        message.Project,
+		EngineName:     message.EngineName,
+		EngineVersion:  message.EngineVersion,
+		EnginePlatform: message.EnginePlatform,
+		BuildrID:       message.BuildrID,
 	}
-	jsonMessage, err := json.Marshal(message)
+	jsonMessage, err := json.Marshal(messageToSend)
 	if err != nil {
 		return err
 	}

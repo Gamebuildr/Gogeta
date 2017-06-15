@@ -31,7 +31,6 @@ func (scm *GitVersionControl) CloneSource(repo *SourceRepository, location strin
 		return err
 	}
 	if err := cmd.Wait(); err != nil {
-		// println(err.Error())
 		print(string(cmdOutput.Bytes()))
 		return err
 	}

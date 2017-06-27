@@ -30,3 +30,6 @@ const LogPath string = "GOGETA_LOG_PATH"
 
 // MessageString is the string representation of the message to use
 const MessageString string = "MESSAGE_STRING"
+
+// GamebuildrEncryptionKey is the string representation of the message to use
+const GamebuildrEncryptionKey string = "GAMEBUILDR_ENCRYPTION_KEY"

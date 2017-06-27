@@ -12,6 +12,7 @@ import (
 	"errors"
 
 	"github.com/Gamebuildr/Gogeta/pkg/config"
+	"github.com/Gamebuildr/Gogeta/pkg/gbcrypto"
 	"github.com/Gamebuildr/Gogeta/pkg/publisher"
 	"github.com/Gamebuildr/Gogeta/pkg/sourcesystem"
 	"github.com/Gamebuildr/Gogeta/pkg/storehouse"
@@ -28,6 +29,7 @@ type Gogeta struct {
 	Storage        storehouse.StoreHouse
 	Publisher      publisher.Publish
 	messageCounter int
+	Crypto         gbcrypto.Interface
 }
 
 type gogetaMessage struct {
@@ -125,6 +127,7 @@ func (client *Gogeta) Start(devMode bool) {
 	client.Log = log
 	client.Storage = store
 	client.Publisher = &notifications
+	client.Crypto = gbcrypto.Cryptography{}
 
 	// Generate gcloud service .json file
 	creds := credentials.GcloudCredentials{}
@@ -154,16 +157,18 @@ func (client *Gogeta) RunGogetaClient(messageString string) *sourcesystem.Source
 
 	defer client.sendBuildEndIfPanic(message)
 
+	repoURL := client.Crypto.Decrypt(os.Getenv(config.GamebuildrEncryptionKey), message.RepoURL)
+
 	client.broadcastProgress("Source code download request received", message.ID)
 
-	if err := client.setVersionControl(message); err != nil {
+	if err := client.setVersionControl(message.RepoType); err != nil {
 		client.broadcastFailure(err.Error(), "client.SCM value is nil", message)
 		return &repo
 	}
 
 	client.broadcastProgress("Downloading latest project source", message.ID)
 
-	if err := client.downloadSource(&repo, message); err != nil {
+	if err := client.downloadSource(&repo, message.Project, repoURL); err != nil {
 		cloneErr := fmt.Sprintf("Cloning failed with the following error: %v", err.Error())
 		client.broadcastFailure(cloneErr, err.Error(), message)
 		return &repo
@@ -264,12 +269,12 @@ func (client *Gogeta) sendBuildFailedMessage(failMessage string, message gogetaM
 	client.Publisher.SendJSON(&notification)
 }
 
-func (client *Gogeta) setVersionControl(message gogetaMessage) error {
+func (client *Gogeta) setVersionControl(repoType string) error {
 	if client.SCM != nil {
 		return nil
 	}
 
-	dataType := strings.ToUpper(message.RepoType)
+	dataType := strings.ToUpper(repoType)
 	scm := &sourcesystem.SystemSCM{}
 	scm.Log = client.Log
 	switch dataType {
@@ -285,10 +290,7 @@ func (client *Gogeta) setVersionControl(message gogetaMessage) error {
 	return nil
 }
 
-func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository, message gogetaMessage) error {
-	project := message.Project
-	origin := message.RepoURL
-
+func (client *Gogeta) downloadSource(repo *sourcesystem.SourceRepository, project string, origin string) error {
 	if project == "" || origin == "" {
 		return errors.New("No data found to download source")
 	}

@@ -73,7 +73,7 @@ func (scm *MockSCM) UpdateSource(repo *sourcesystem.SourceRepository) error {
 	return nil
 }
 
-// MockPublisher mocks our the pubisher system in the gogeta client
+// MockPublisher mocks out the pubisher system in the gogeta client
 type MockPublisher struct {
 	SendJSONCallCount int
 	MockMessage       gamebuildrMessage
@@ -99,7 +99,22 @@ func (service *MockPublisher) SendJSON(msg *publisher.Message) {
 	service.SendJSONCallCount++
 }
 
-const mockMessage string = `{"id":"12","project":"Bloom","enginename":"Godot","engineversion":"2.1","engineplatform":"PC","repotype":"Mock","repourl":"https://github.com/dirty-casuals/Bloom.git","buildowner":"herman.rogers@gmail.com"}`
+// MockCryptography mocks out the cryptoraphy system in the gogeta client
+type MockCryptography struct {
+}
+
+func (cryptography MockCryptography) Encrypt(keyStr string, cryptoText string) string {
+	return cryptoText
+}
+
+func (cryptography MockCryptography) Decrypt(keyStr string, cryptoText string) string {
+	return cryptoText
+}
+
+const mockMessage string = `{"id":"12","project":"Bloom","enginename":"Godot","engineversion":"2.1",
+	"engineplatform":"PC","repotype":"Mock",
+	"repourl":"https://github.com/dirty-casuals/Bloom.git",
+	"buildowner":"herman.rogers@gmail.com"}`
 
 func mockGogetaClient(reposize int64) *Gogeta {
 	// Reset Publisher each client setup
@@ -110,6 +125,7 @@ func mockGogetaClient(reposize int64) *Gogeta {
 	mockstore := new(storehouse.Compressed)
 	mockCompression := MockCompression{}
 	mockStorage := MockStorage{}
+	mockCryptography := MockCryptography{}
 
 	mockstore.Compression = &mockCompression
 	mockstore.StorageSystem = &mockStorage
@@ -118,6 +134,7 @@ func mockGogetaClient(reposize int64) *Gogeta {
 	client.SCM = mockSCM
 	client.Storage = mockstore
 	client.Publisher = &mockPublisher
+	client.Crypto = mockCryptography
 	return client
 }
 

@@ -144,6 +144,8 @@ func (client *Gogeta) RunGogetaClient(messageString string) *sourcesystem.Source
 		return &repo
 	}
 
+	defer client.sendBuildEndIfPanic(message)
+
 	client.broadcastProgress("Source code download request received", message.ID)
 
 	if err := client.setVersionControl(message); err != nil {
@@ -179,6 +181,14 @@ func (client *Gogeta) RunGogetaClient(messageString string) *sourcesystem.Source
 	}
 
 	return &repo
+}
+
+func (client *Gogeta) sendBuildEndIfPanic(message gogetaMessage) {
+	if r := recover(); r != nil {
+		err := fmt.Sprintf("%v", r)
+		client.broadcastFailure(err, "An unexpected error has occured", message)
+		panic(r)
+	}
 }
 
 func (client *Gogeta) broadcastProgress(info string, buildID string) {

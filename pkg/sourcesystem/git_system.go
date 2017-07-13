@@ -28,11 +28,10 @@ func (scm *GitVersionControl) CloneSource(repo *SourceRepository, location strin
 
 	scm.command = cmd
 	if err := cmd.Start(); err != nil {
-		return err
+		return fmt.Errorf("%s, %s", err.Error(), cmdOutput.Bytes())
 	}
 	if err := cmd.Wait(); err != nil {
-		print(string(cmdOutput.Bytes()))
-		return err
+		return fmt.Errorf("%s, %s", err.Error(), cmdOutput.Bytes())
 	}
 	if err := createGitCredentials(location); err != nil {
 		return err

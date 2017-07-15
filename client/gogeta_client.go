@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,10 +23,11 @@ import (
 
 // Gogeta is the source control manager implementation
 type Gogeta struct {
-	Log       logger.Log
-	SCM       sourcesystem.SourceSystem
-	Storage   storehouse.StoreHouse
-	Publisher publisher.Publish
+	Log            logger.Log
+	SCM            sourcesystem.SourceSystem
+	Storage        storehouse.StoreHouse
+	Publisher      publisher.Publish
+	messageCounter int
 }
 
 type gogetaMessage struct {
@@ -53,10 +55,12 @@ type mrRobotMessage struct {
 }
 
 type gamebuildrMessage struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
-	Order   int    `json:"order"`
-	BuildID string `json:"buildid"`
+	Type      string `json:"type"`
+	Message   string `json:"message"`
+	Order     int    `json:"order"`
+	BuildID   string `json:"buildid"`
+	Chunk     string `json:"chunk"`
+	MessageID string `json:"messageid"`
 }
 
 type buildResponse struct {
@@ -68,11 +72,15 @@ type buildResponse struct {
 	Message   string `json:"message"`
 	BuildPath string `json:"buildpath"`
 	End       int64  `json:"end"`
+	Chunk     string `json:"chunk"`
+	MessageID string `json:"messageid"`
 }
 
 const buildrMessage string = "BUILDR_MESSAGE"
 
 const logFileName string = "gogeta_client_"
+
+const chunkID string = "GOGETA"
 
 // Supported SCM types
 const git string = "GIT"
@@ -207,10 +215,14 @@ func (client *Gogeta) broadcastFailure(info string, err string, message gogetaMe
 
 func (client *Gogeta) sendGamebuildrMessage(messageInfo string, buildID string) {
 	reponse := gamebuildrMessage{
-		Type:    buildrMessage,
-		Message: messageInfo,
-		BuildID: buildID,
+		Type:      buildrMessage,
+		Message:   messageInfo,
+		BuildID:   buildID,
+		Chunk:     chunkID,
+		MessageID: strconv.Itoa(client.messageCounter),
 	}
+
+	client.messageCounter++
 
 	jsonMessage, err := json.Marshal(reponse)
 	if err != nil {
@@ -227,13 +239,17 @@ func (client *Gogeta) sendGamebuildrMessage(messageInfo string, buildID string) 
 
 func (client *Gogeta) sendBuildFailedMessage(failMessage string, message gogetaMessage) {
 	response := buildResponse{
-		Success:  false,
-		BuildrID: message.BuildrID,
-		BuildID:  message.ID,
-		Type:     buildrMessage,
-		Message:  failMessage,
-		End:      getBuildEndTime(),
+		Success:   false,
+		BuildrID:  message.BuildrID,
+		BuildID:   message.ID,
+		Type:      buildrMessage,
+		Message:   failMessage,
+		End:       getBuildEndTime(),
+		Chunk:     chunkID,
+		MessageID: strconv.Itoa(client.messageCounter),
 	}
+
+	client.messageCounter++
 
 	jsonMessage, err := json.Marshal(response)
 	if err != nil {

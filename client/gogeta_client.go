@@ -171,7 +171,7 @@ func (client *Gogeta) RunGogetaClient(messageString string) *sourcesystem.Source
 	if err := client.downloadSource(&repo, message.Project, repoURL); err != nil {
 		redactedErr := strings.Replace(err.Error(), repo.SourceOrigin, "*****", -1)
 		cloneErr := fmt.Sprintf("Cloning failed with the following error: %v", redactedErr)
-		client.broadcastFailure(cloneErr, err.Error(), message)
+		client.broadcastFailure(cloneErr, redactedErr, message)
 		return &repo
 	}
 	if repo.SourceLocation == "" {
